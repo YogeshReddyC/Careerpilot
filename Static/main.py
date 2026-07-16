@@ -23,6 +23,11 @@ logger = logging.getLogger("careerpilot")
 # One client, created once at startup, reused by every request that needs Gemini.
 gemini_client = genai.Client(api_key=GEMINI_API_KEY)
 
+# Approximate gemini-flash-lite pricing (USD per 1M tokens) — for cost-awareness
+# in logs, not billing. Check ai.google.dev/pricing for current exact rates.
+INPUT_COST_PER_1M_TOKENS = 0.075
+OUTPUT_COST_PER_1M_TOKENS = 0.30
+
 DB_PATH = os.path.join(os.path.dirname(__file__), "careerpilot.db")
 
 
@@ -224,9 +229,16 @@ def analyze(payload: AnalyzeRequest, _: None = Depends(require_login)):
         raise HTTPException(status_code=500, detail="Something went wrong, try again")
 
     latency = time.monotonic() - start_time
+    usage = response.usage_metadata
+    input_tokens = usage.prompt_token_count
+    output_tokens = usage.candidates_token_count
+    estimated_cost = (
+        (input_tokens / 1_000_000) * INPUT_COST_PER_1M_TOKENS
+        + (output_tokens / 1_000_000) * OUTPUT_COST_PER_1M_TOKENS
+    )
     logger.info(
-        "analyze ok latency=%.2fs resume_chars=%d jd_chars=%d",
-        latency, len(resume), len(job_description),
+        "analyze ok latency=%.2fs input_tokens=%d output_tokens=%d est_cost=$%.6f",
+        latency, input_tokens, output_tokens, estimated_cost,
     )
     return response.parsed
 
