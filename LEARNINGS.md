@@ -44,6 +44,17 @@ choice — check what's actually reachable on your tier.
   revisiting (e.g. a hosted Postgres) if this app needs to keep real user accounts
   long-term after Day 3.
 
+## Day 3 — Deployment
+
+Deployed to Render's free tier, connected to the GitHub repo, root directory set to
+`Static/`. First deploy succeeded on the first attempt — build and start commands worked
+without changes. Confirmed working end-to-end on the live public URL from both a laptop
+browser and a phone: signup, login, and a real Gemini-powered analysis all succeeded.
+
+**Known limitation:** free-tier Render spins the service down after 15 minutes of no
+traffic; the next request after that can take 50+ seconds while it wakes back up. Expected
+behavior for a free/hobby deployment, not a bug.
+
 ## Prompt iteration
 
 10+ prompt iterations (as suggested by the original spec) were trimmed to 2, documented
