@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CareerPilot — AI Resume Fit Analyzer</title>
+    <link rel="icon" type="image/png" href="pics.png/check.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="Style.css">
+</head>
+<body>
+
+    <div class="app-shell">
+
+        <nav class="navbar">
+            <div class="nav-brand">
+                <span class="brand-mark">CP</span>
+                <span class="brand-name">CareerPilot</span>
+            </div>
+
+            <div class="nav-links">
+                <button class="nav-item active" data-section="home">Home</button>
+                <button class="nav-item" data-section="about">About</button>
+                <button class="nav-item" data-section="contact">Contact</button>
+            </div>
+
+            <div class="nav-actions">
+                <button id="loginNavBtn" class="btn-ghost">Login</button>
+                <button id="getStartedBtn" class="btn-primary">Get Started</button>
+            </div>
+        </nav>
+
+        <div class="main-area">
+
+            <header class="top-header">
+                <h1 id="sectionTitle">Resume Fit Analyzer</h1>
+                <p id="sectionSubtitle">Paste your resume and a job description — get an instant AI fit analysis.</p>
+            </header>
+
+            <!-- HOME / ANALYZER SECTION -->
+            <section id="section-home" class="content-section active">
+
+                <!-- Shown when NOT logged in: premium promo/hero -->
+                <div class="hero" id="heroPromo">
+                    <div class="hero-content">
+                        <h1 class="hero-headline">Know Your Fit Before You Apply</h1>
+                        <p class="hero-subheadline">
+                            CareerPilot uses AI to instantly analyze how well your resume matches any
+                            job description — highlighting your strengths, your gaps, and exactly what to fix.
+                        </p>
+                        <button id="heroCtaBtn" class="btn-primary btn-large">Get Started — It's Free</button>
+                    </div>
+
+                    <div class="hero-features">
+                        <div class="feature-card">
+                            <div class="feature-icon">&#9670;</div>
+                            <h3>Instant Analysis</h3>
+                            <p>Paste your resume and a job description, get results in seconds.</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">&#10038;</div>
+                            <h3>AI-Powered Insights</h3>
+                            <p>Powered by Google's Gemini AI for an honest, structured breakdown.</p>
+                        </div>
+                        <div class="feature-card">
+                            <div class="feature-icon">&#8594;</div>
+                            <h3>Actionable Suggestions</h3>
+                            <p>Get concrete, specific ways to improve your resume for the role.</p>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Shown when logged in -->
+                <div class="card" id="analyzerCard" hidden>
+
+                    <div class="input-row">
+                        <div class="input-col">
+                            <label for="resume">Resume</label>
+                            <textarea
+                                id="resume"
+                                rows="12"
+                                placeholder="Paste your resume text here..."></textarea>
+                            <span class="char-count" id="resumeCount">0 / 15,000</span>
+                        </div>
+
+                        <div class="input-col">
+                            <label for="jd">Job Description</label>
+                            <textarea
+                                id="jd"
+                                rows="12"
+                                placeholder="Paste the job description here..."></textarea>
+                            <span class="char-count" id="jdCount">0 / 15,000</span>
+                        </div>
+                    </div>
+
+                    <button id="analyzeBtn">
+                        <span class="btn-label">Analyze Fit</span>
+                        <span class="spinner" id="spinner" hidden></span>
+                    </button>
+
+                    <p class="error-message" id="errorMessage" hidden></p>
+
+                    <section class="result" id="result" hidden>
+
+                        <div class="result-card result-fit">
+                            <div class="result-icon">&#9678;</div>
+                            <div class="result-body">
+                                <h3>Overall Fit</h3>
+                                <p id="resultFit"></p>
+                            </div>
+                        </div>
+
+                        <div class="result-card result-strengths">
+                            <div class="result-icon">&#10003;</div>
+                            <div class="result-body">
+                                <h3>Strengths</h3>
+                                <div id="resultStrengths"></div>
+                            </div>
+                        </div>
+
+                        <div class="result-card result-gaps">
+                            <div class="result-icon">!</div>
+                            <div class="result-body">
+                                <h3>Gaps</h3>
+                                <div id="resultGaps"></div>
+                            </div>
+                        </div>
+
+                        <div class="result-card result-suggestions">
+                            <div class="result-icon">&#8594;</div>
+                            <div class="result-body">
+                                <h3>Suggestions</h3>
+                                <div id="resultSuggestions"></div>
+                            </div>
+                        </div>
+
+                    </section>
+
+                </div>
+
+            </section>
+
+            <!-- ABOUT SECTION (public, no login needed) -->
+            <section id="section-about" class="content-section">
+                <div class="card about-card">
+                    <h2>About CareerPilot</h2>
+                    <p>
+                        CareerPilot is an AI-powered resume analyzer. Paste your resume and a job
+                        description, and CareerPilot uses Google's Gemini AI to assess your overall fit,
+                        highlight your strengths, flag gaps, and suggest concrete improvements — in seconds.
+                    </p>
+
+                    <h3>How it works</h3>
+                    <ol class="about-steps">
+                        <li>Log in and paste your resume into the Home screen</li>
+                        <li>Paste the job description you're targeting</li>
+                        <li>Click <strong>Analyze Fit</strong></li>
+                        <li>Get a structured, AI-generated breakdown of your fit</li>
+                    </ol>
+
+                    <h3>Built with</h3>
+                    <ul class="about-stack">
+                        <li>FastAPI (Python) — backend</li>
+                        <li>Vanilla HTML / CSS / JavaScript — frontend</li>
+                        <li>Google Gemini API — the analysis engine</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- CONTACT SECTION (public, no login needed) -->
+            <section id="section-contact" class="content-section">
+                <div class="card about-card">
+                    <h2>Contact</h2>
+                    <p>Questions, feedback, or found a bug? Reach out.</p>
+                    <p>
+                        <strong>Email:</strong>
+                        <a href="mailto:cyogeshreddy00@gmail.com">cyogeshreddy00@gmail.com</a>
+                    </p>
+                </div>
+            </section>
+
+        </div>
+
+    </div>
+
+    <!-- Login modal — opened by the Login / Get Started buttons -->
+    <div class="modal-overlay" id="loginModalOverlay" hidden>
+        <div class="modal-card">
+            <button class="modal-close" id="modalCloseBtn" aria-label="Close">&times;</button>
+            <h2>Log in to continue</h2>
+            <p>Enter your credentials to access the resume analyzer.</p>
+
+            <div class="login-form">
+                <label for="loginUsername">Username</label>
+                <input type="text" id="loginUsername" placeholder="Username" autocomplete="username">
+
+                <label for="loginPassword">Password</label>
+                <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
+
+                <button id="loginSubmitBtn">Log In</button>
+
+                <p class="error-message" id="loginError" hidden></p>
+
+                <p class="modal-switch">Don't have an account? <a href="#" id="switchToSignupLink">Sign up</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signup modal — opened by the "Get Started" button -->
+    <div class="modal-overlay" id="signupModalOverlay" hidden>
+        <div class="modal-card">
+            <button class="modal-close" id="signupModalCloseBtn" aria-label="Close">&times;</button>
+            <h2>Create your account</h2>
+            <p>Sign up to start analyzing your resume fit.</p>
+
+            <div class="login-form">
+                <label for="signupName">Name</label>
+                <input type="text" id="signupName" placeholder="Your name" autocomplete="name">
+
+                <label for="signupUsername">Username</label>
+                <input type="text" id="signupUsername" placeholder="Choose a username" autocomplete="username">
+
+                <label for="signupPassword">Password</label>
+                <input type="password" id="signupPassword" placeholder="Choose a password (min 6 characters)" autocomplete="new-password">
+
+                <button id="signupSubmitBtn">Sign Up</button>
+
+                <p class="error-message" id="signupError" hidden></p>
+
+                <p class="modal-switch">Already have an account? <a href="#" id="switchToLoginLink">Log in</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+
+</body>
+</html>
