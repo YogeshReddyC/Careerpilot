@@ -80,12 +80,16 @@
 
                     <div class="input-row">
                         <div class="input-col">
-                            <label for="resume">Resume</label>
-                            <textarea
-                                id="resume"
-                                rows="12"
-                                placeholder="Paste your resume text here..."></textarea>
-                            <span class="char-count" id="resumeCount">0 / 15,000</span>
+                            <label for="resumeFile">Resume</label>
+                            <div class="file-drop" id="fileDrop">
+                                <input
+                                    type="file"
+                                    id="resumeFile"
+                                    accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+                                <label for="resumeFile" class="file-drop-label">
+                                    <span id="fileDropText">Choose a PDF or DOCX file, or drag it here</span>
+                                </label>
+                            </div>
                         </div>
 
                         <div class="input-col">

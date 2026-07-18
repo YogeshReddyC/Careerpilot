@@ -242,7 +242,7 @@ function handleGetStarted() {
         homeView = "analyzer";
         renderHomeView();
         showSection("home");
-        resumeInput.focus();
+        resumeFileInput.focus();
     } else {
         openSignupModal();
     }
@@ -251,18 +251,19 @@ function handleGetStarted() {
 getStartedBtn.addEventListener("click", handleGetStarted);
 heroCtaBtn.addEventListener("click", handleGetStarted);
 
-const resumeInput = document.getElementById("resume");
+const resumeFileInput = document.getElementById("resumeFile");
+const fileDrop = document.getElementById("fileDrop");
+const fileDropText = document.getElementById("fileDropText");
 const jdInput = document.getElementById("jd");
-const resumeCount = document.getElementById("resumeCount");
 const jdCount = document.getElementById("jdCount");
 const analyzeBtn = document.getElementById("analyzeBtn");
 const spinner = document.getElementById("spinner");
 const errorMessage = document.getElementById("errorMessage");
 const resultSection = document.getElementById("result");
 
-updateCharCount(resumeInput, resumeCount);
+const ALLOWED_RESUME_EXTENSIONS = [".pdf", ".docx"];
+
 updateCharCount(jdInput, jdCount);
-resumeInput.addEventListener("input", () => updateCharCount(resumeInput, resumeCount));
 jdInput.addEventListener("input", () => updateCharCount(jdInput, jdCount));
 
 function updateCharCount(input, counter) {
@@ -271,39 +272,73 @@ function updateCharCount(input, counter) {
     counter.classList.toggle("over-limit", length > MAX_CHARS);
 }
 
+resumeFileInput.addEventListener("change", () => {
+    const file = resumeFileInput.files[0];
+    fileDropText.textContent = file ? file.name : "Choose a PDF or DOCX file, or drag it here";
+    fileDrop.classList.toggle("has-file", Boolean(file));
+});
+
+["dragover", "dragleave", "drop"].forEach(eventName => {
+    fileDrop.addEventListener(eventName, event => event.preventDefault());
+});
+
+fileDrop.addEventListener("dragover", () => fileDrop.classList.add("drag-active"));
+fileDrop.addEventListener("dragleave", () => fileDrop.classList.remove("drag-active"));
+
+fileDrop.addEventListener("drop", event => {
+    fileDrop.classList.remove("drag-active");
+    const file = event.dataTransfer.files[0];
+    if (file) {
+        resumeFileInput.files = event.dataTransfer.files;
+        resumeFileInput.dispatchEvent(new Event("change"));
+    }
+});
+
+function hasAllowedExtension(filename) {
+    const lower = filename.toLowerCase();
+    return ALLOWED_RESUME_EXTENSIONS.some(ext => lower.endsWith(ext));
+}
+
 analyzeBtn.addEventListener("click", handleAnalyze);
 
 async function handleAnalyze() {
-    const resume = resumeInput.value.trim();
+    const resumeFile = resumeFileInput.files[0];
     const jobDescription = jdInput.value.trim();
 
     hideError();
     resultSection.hidden = true;
 
-    if (resume === "" || jobDescription === "") {
-        showError("Please fill in both the resume and job description.");
+    if (!resumeFile || jobDescription === "") {
+        showError("Please upload your resume and fill in the job description.");
         return;
     }
 
-    if (resume.length > MAX_CHARS || jobDescription.length > MAX_CHARS) {
-        showError(`Text is too long — please keep each field under ${MAX_CHARS.toLocaleString()} characters.`);
+    if (!hasAllowedExtension(resumeFile.name)) {
+        showError("Please upload a PDF or DOCX file.");
+        return;
+    }
+
+    if (jobDescription.length > MAX_CHARS) {
+        showError(`Job description is too long — please keep it under ${MAX_CHARS.toLocaleString()} characters.`);
         return;
     }
 
     setLoading(true);
 
     try {
+        const formData = new FormData();
+        formData.append("resume_file", resumeFile);
+        formData.append("job_description", jobDescription);
+
         const response = await fetch("/analyze", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                resume: resume,
-                job_description: jobDescription,
-            }),
+            body: formData,
         });
 
         if (!response.ok) {
-            throw new Error("Request failed");
+            const errorData = await response.json().catch(() => null);
+            showError((errorData && errorData.detail) || "Something went wrong, please try again.");
+            return;
         }
 
         const data = await response.json();

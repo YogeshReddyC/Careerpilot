@@ -1,22 +1,24 @@
 # CareerPilot — AI Resume Fit Analyzer
 
 CareerPilot is a web app that compares your resume against a job description and gives
-you an AI-generated breakdown of your fit: an overall assessment, your strengths, gaps,
+you an AI-generated breakdown of your fit: a keyword match score, your strengths, gaps,
 and concrete suggestions to improve your resume for that specific role.
 
 ## How it works
 
 1. Sign up for an account, then log in.
-2. Paste your resume and a job description into the two text boxes.
+2. Upload your resume as a PDF or DOCX file, and paste the job description into the text box.
 3. Click **Analyze Fit**.
-4. The backend sends both texts to Google's Gemini AI with instructions to assess fit,
-   and displays the structured result — Fit / Strengths / Gaps / Suggestions.
+4. The backend extracts your resume's text, sends both it and the job description to
+   Google's Gemini AI, and displays the structured result — Match Score, Matched/Missing
+   Keywords, Overall Fit, Strengths, Gaps, and Suggestions.
 
 ## Built with
 
 - **FastAPI** (Python) — backend web framework
 - **Vanilla HTML / CSS / JavaScript** — frontend, no framework
 - **Google Gemini API** — the AI model that performs the actual analysis
+- **pypdf / python-docx** — extract text from uploaded PDF/DOCX resumes
 - **SQLite + bcrypt** — user accounts, with hashed (never plain-text) passwords
 
 ## Running locally

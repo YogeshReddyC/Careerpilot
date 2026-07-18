@@ -74,3 +74,26 @@ behavior for a free/hobby deployment, not a bug.
 10+ prompt iterations (as suggested by the original spec) were trimmed to 2, documented
 in `prompts/v1.md` and `prompts/v2.md` — a deliberate scope cut for the 3-day deadline,
 not an oversight.
+
+## Keyword match score, grounding, and file upload (post-Week-1)
+
+- **Fit label was inconsistent with the keyword score.** Originally Gemini picked its own
+  `fit` opinion independently of anything else, so it could (and did, in testing) return
+  `"High"` fit next to a 10% keyword match — two unrelated numbers with nothing forcing
+  them to agree. Fixed by removing `fit` from what the model produces at all; it's now
+  computed in Python (`fit_label_from_score`) from the same score used for the
+  matched/missing keyword lists, so the two can never contradict each other again.
+- **Output guardrail added.** `response_schema` only guarantees the model's response has
+  the right *shape*, not that its claims are true. Added `verify_keywords_grounded()` —
+  drops any extracted keyword that doesn't literally appear (case-insensitive substring)
+  in its source text, rather than trusting the model's extraction as-is. Known limitation:
+  plain substring matching means synonyms/rewordings ("REST API" vs "REST APIs", "5 years"
+  vs "five years of experience") can be flagged as ungrounded/missing even when the
+  underlying claim is true — a stricter-than-necessary false negative, not a false positive.
+- **Resume input switched from pasted text to file upload** (PDF or DOCX), the stretch
+  goal deferred from Week 1. Chose a plain browser file picker over integrating real
+  Google Drive/Dropbox pickers — those require OAuth + registered API credentials and are
+  a materially bigger build; a normal file input already reaches anything synced locally
+  by the Drive/Dropbox desktop apps, since those just appear as regular files on disk.
+  Text extraction via `pypdf` (PDF) and `python-docx` (DOCX); a 5MB file size cap was
+  added since the endpoint now handles raw binary uploads instead of bounded JSON text.
