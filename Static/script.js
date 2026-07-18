@@ -337,7 +337,40 @@ function renderResult(data) {
     renderListOrText("resultStrengths", data.strengths);
     renderListOrText("resultGaps", data.gaps);
     renderListOrText("resultSuggestions", data.suggestions);
+    renderScore(data.score, data.matched_keywords, data.missing_keywords);
     resultSection.hidden = false;
+}
+
+function renderScore(score, matchedKeywords, missingKeywords) {
+    const matched = matchedKeywords || [];
+    const missing = missingKeywords || [];
+    const safeScore = Number.isFinite(score) ? score : 0;
+
+    document.getElementById("scoreValue").textContent = safeScore;
+    document.getElementById("matchedCount").textContent = matched.length;
+    document.getElementById("totalKeywordCount").textContent = matched.length + missing.length;
+
+    // Ring is a conic-gradient — filled proportionally to the score, color
+    // shifts from warning to success as the score climbs.
+    const ringColor = safeScore >= 70 ? "var(--success)" : safeScore >= 40 ? "var(--warning)" : "var(--danger)";
+    const ring = document.getElementById("scoreRing");
+    ring.style.background = `conic-gradient(${ringColor} ${safeScore * 3.6}deg, var(--border) 0deg)`;
+
+    renderKeywordChips("matchedKeywords", matched, "chip-matched");
+    renderKeywordChips("missingKeywords", missing, "chip-missing");
+}
+
+function renderKeywordChips(elementId, keywords, chipClass) {
+    const container = document.getElementById(elementId);
+
+    if (keywords.length === 0) {
+        container.innerHTML = `<span class="chip-empty">None</span>`;
+        return;
+    }
+
+    container.innerHTML = keywords
+        .map(kw => `<span class="chip ${chipClass}">${escapeHtml(kw)}</span>`)
+        .join("");
 }
 
 function renderListOrText(elementId, value) {

@@ -107,6 +107,35 @@
 
                     <section class="result" id="result" hidden>
 
+                        <div class="result-card result-score">
+                            <div class="score-ring" id="scoreRing">
+                                <span id="scoreValue">0</span>
+                            </div>
+                            <div class="result-body">
+                                <h3>Match Score</h3>
+                                <p class="score-caption">
+                                    <span id="matchedCount">0</span> of
+                                    <span id="totalKeywordCount">0</span> job-description keywords found in your resume.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="result-card result-matched">
+                            <div class="result-icon">&#10003;</div>
+                            <div class="result-body">
+                                <h3>Matched Keywords</h3>
+                                <div id="matchedKeywords" class="keyword-chips"></div>
+                            </div>
+                        </div>
+
+                        <div class="result-card result-missing">
+                            <div class="result-icon">!</div>
+                            <div class="result-body">
+                                <h3>Missing Keywords</h3>
+                                <div id="missingKeywords" class="keyword-chips"></div>
+                            </div>
+                        </div>
+
                         <div class="result-card result-fit">
                             <div class="result-icon">&#9678;</div>
                             <div class="result-body">
