@@ -779,6 +779,112 @@ button#analyzeBtn:disabled {
   margin-bottom: 4px;
 }
 
+/* History */
+
+.history-empty {
+  color: var(--text-secondary);
+  font-size: 14px;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.history-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.history-item-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px;
+  background: var(--card-bg);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.history-item-summary {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.history-score-badge {
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+  background: var(--border);
+  color: var(--text-primary);
+}
+
+.history-score-badge.fit-high { background: var(--success-soft); color: var(--success); }
+.history-score-badge.fit-medium { background: var(--warning-soft); color: var(--warning); }
+.history-score-badge.fit-low { background: var(--danger-soft); color: var(--danger); }
+
+.history-item-meta {
+  min-width: 0;
+}
+
+.history-item-title {
+  font-weight: 700;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-item-sub {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.history-item-jd {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60ch;
+}
+
+.history-chevron {
+  flex-shrink: 0;
+  color: var(--text-secondary);
+  transition: transform 0.15s;
+}
+
+.history-item-header.expanded .history-chevron {
+  transform: rotate(180deg);
+}
+
+.history-item-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 0 16px 16px;
+  background: var(--card-bg);
+}
+
 /* Mobile */
 
 @media (max-width: 800px) {
@@ -815,7 +921,8 @@ button#analyzeBtn:disabled {
     grid-template-columns: 1fr;
   }
 
-  .result {
+  .result,
+  .history-item-body {
     grid-template-columns: 1fr;
   }
 

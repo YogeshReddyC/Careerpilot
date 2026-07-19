@@ -6,6 +6,10 @@ const SECTION_INFO = {
         title: "Resume Fit Analyzer",
         subtitle: "Paste your resume and a job description — get an instant AI fit analysis.",
     },
+    history: {
+        title: "Your Previous Analyses",
+        subtitle: "Come back anytime to revisit your past resume-fit results.",
+    },
     about: {
         title: "About",
         subtitle: "What CareerPilot is and how it works.",
@@ -34,6 +38,9 @@ navItems.forEach(item => {
         if (item.dataset.section === "home" && isLoggedIn) {
             homeView = "promo";
             renderHomeView();
+        }
+        if (item.dataset.section === "history") {
+            loadHistory();
         }
         showSection(item.dataset.section);
     });
@@ -78,6 +85,7 @@ const loginPassword = document.getElementById("loginPassword");
 const loginSubmitBtn = document.getElementById("loginSubmitBtn");
 const loginError = document.getElementById("loginError");
 const loginNavBtn = document.getElementById("loginNavBtn");
+const historyNavBtn = document.getElementById("historyNavBtn");
 const getStartedBtn = document.getElementById("getStartedBtn");
 const heroCtaBtn = document.getElementById("heroCtaBtn");
 const switchToSignupLink = document.getElementById("switchToSignupLink");
@@ -105,6 +113,7 @@ function setAuthUI(loggedIn, jumpToAnalyzer = false) {
     isLoggedIn = loggedIn;
     homeView = loggedIn && jumpToAnalyzer ? "analyzer" : "promo";
     loginNavBtn.textContent = loggedIn ? "Logout" : "Login";
+    historyNavBtn.hidden = !loggedIn;
     renderHomeView();
 }
 
@@ -396,31 +405,137 @@ function renderScore(score, matchedKeywords, missingKeywords) {
 }
 
 function renderKeywordChips(elementId, keywords, chipClass) {
-    const container = document.getElementById(elementId);
+    document.getElementById(elementId).innerHTML = keywordChipsHtml(keywords, chipClass);
+}
 
-    if (keywords.length === 0) {
-        container.innerHTML = `<span class="chip-empty">None</span>`;
-        return;
+function keywordChipsHtml(keywords, chipClass) {
+    if (!keywords || keywords.length === 0) {
+        return `<span class="chip-empty">None</span>`;
     }
-
-    container.innerHTML = keywords
+    return keywords
         .map(kw => `<span class="chip ${chipClass}">${escapeHtml(kw)}</span>`)
         .join("");
 }
 
 function renderListOrText(elementId, value) {
-    const container = document.getElementById(elementId);
+    document.getElementById(elementId).innerHTML = listOrTextHtml(value);
+}
 
+function listOrTextHtml(value) {
     if (Array.isArray(value)) {
-        const items = value.map(item => `<li>${escapeHtml(item)}</li>`).join("");
-        container.innerHTML = `<ul>${items}</ul>`;
-    } else {
-        container.innerHTML = `<p>${escapeHtml(value || "Nothing to show.")}</p>`;
+        return `<ul>${value.map(item => `<li>${escapeHtml(item)}</li>`).join("")}</ul>`;
     }
+    return `<p>${escapeHtml(value || "Nothing to show.")}</p>`;
 }
 
 function escapeHtml(text) {
     const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
+}
+
+// --- History ---
+// Logged-in users can revisit past analyses. The server is the real gate
+// (require_login on /api/history); this just fetches and renders.
+
+const historyList = document.getElementById("historyList");
+const historyEmpty = document.getElementById("historyEmpty");
+
+async function loadHistory() {
+    if (!isLoggedIn) return;
+
+    historyList.innerHTML = "";
+    historyEmpty.hidden = true;
+
+    try {
+        const response = await fetch("/api/history");
+        if (!response.ok) return;
+        const items = await response.json();
+        renderHistory(items);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+function renderHistory(items) {
+    if (!items || items.length === 0) {
+        historyEmpty.hidden = false;
+        historyList.innerHTML = "";
+        return;
+    }
+
+    historyEmpty.hidden = true;
+    historyList.innerHTML = items.map(historyItemHtml).join("");
+
+    historyList.querySelectorAll(".history-item-header").forEach(header => {
+        header.addEventListener("click", () => {
+            const body = header.nextElementSibling;
+            body.hidden = !body.hidden;
+            header.classList.toggle("expanded", !body.hidden);
+        });
+    });
+}
+
+function historyItemHtml(item) {
+    const date = new Date(`${item.created_at}Z`).toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+    });
+    const fitClass = (item.fit || "").toLowerCase();
+    const jdSnippet = item.job_description.length > 140
+        ? `${item.job_description.slice(0, 140)}…`
+        : item.job_description;
+
+    return `
+        <div class="history-item">
+            <button type="button" class="history-item-header">
+                <div class="history-item-summary">
+                    <span class="history-score-badge fit-${escapeHtml(fitClass)}">${item.score}%</span>
+                    <div class="history-item-meta">
+                        <div class="history-item-title">${escapeHtml(item.resume_filename)}</div>
+                        <div class="history-item-sub">${escapeHtml(date)} &middot; ${escapeHtml(item.fit)} fit</div>
+                        <div class="history-item-jd">${escapeHtml(jdSnippet)}</div>
+                    </div>
+                </div>
+                <span class="history-chevron">&#8964;</span>
+            </button>
+            <div class="history-item-body" hidden>
+                <div class="result-card result-matched">
+                    <div class="result-icon">&#10003;</div>
+                    <div class="result-body">
+                        <h3>Matched Keywords</h3>
+                        <div class="keyword-chips">${keywordChipsHtml(item.matched_keywords, "chip-matched")}</div>
+                    </div>
+                </div>
+                <div class="result-card result-missing">
+                    <div class="result-icon">!</div>
+                    <div class="result-body">
+                        <h3>Missing Keywords</h3>
+                        <div class="keyword-chips">${keywordChipsHtml(item.missing_keywords, "chip-missing")}</div>
+                    </div>
+                </div>
+                <div class="result-card result-strengths">
+                    <div class="result-icon">&#10003;</div>
+                    <div class="result-body">
+                        <h3>Strengths</h3>
+                        ${listOrTextHtml(item.strengths)}
+                    </div>
+                </div>
+                <div class="result-card result-gaps">
+                    <div class="result-icon">!</div>
+                    <div class="result-body">
+                        <h3>Gaps</h3>
+                        ${listOrTextHtml(item.gaps)}
+                    </div>
+                </div>
+                <div class="result-card result-suggestions">
+                    <div class="result-icon">&#8594;</div>
+                    <div class="result-body">
+                        <h3>Suggestions</h3>
+                        ${listOrTextHtml(item.suggestions)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
 }

@@ -24,6 +24,7 @@
 
             <div class="nav-links">
                 <button class="nav-item active" data-section="home">Home</button>
+                <button class="nav-item" id="historyNavBtn" data-section="history" hidden>History</button>
                 <button class="nav-item" data-section="about">About</button>
                 <button class="nav-item" data-section="contact">Contact</button>
             </div>
@@ -176,6 +177,16 @@
 
                 </div>
 
+            </section>
+
+            <!-- HISTORY SECTION (logged-in users only — the server also enforces this) -->
+            <section id="section-history" class="content-section">
+                <div class="card">
+                    <p class="history-empty" id="historyEmpty" hidden>
+                        You haven't analyzed any resumes yet — head to Home to run your first analysis.
+                    </p>
+                    <div class="history-list" id="historyList"></div>
+                </div>
             </section>
 
             <!-- ABOUT SECTION (public, no login needed) -->
