@@ -88,7 +88,8 @@
                                     id="resumeFile"
                                     accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
                                 <label for="resumeFile" class="file-drop-label">
-                                    <span id="fileDropText">Choose a PDF or DOCX file, or drag it here</span>
+                                    <span class="file-drop-icon">&#8593;</span>
+                                    <span id="fileDropText">Choose a PDF or DOCX file</span>
                                 </label>
                             </div>
                         </div>
@@ -247,7 +248,10 @@
                 <label for="loginPassword">Password</label>
                 <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
 
-                <button id="loginSubmitBtn">Log In</button>
+                <button id="loginSubmitBtn">
+                    <span class="btn-label">Log In</span>
+                    <span class="spinner" id="loginSpinner" hidden></span>
+                </button>
 
                 <p class="error-message" id="loginError" hidden></p>
 
@@ -273,7 +277,10 @@
                 <label for="signupPassword">Password</label>
                 <input type="password" id="signupPassword" placeholder="Choose a password (min 6 characters)" autocomplete="new-password">
 
-                <button id="signupSubmitBtn">Sign Up</button>
+                <button id="signupSubmitBtn">
+                    <span class="btn-label">Sign Up</span>
+                    <span class="spinner" id="signupSpinner" hidden></span>
+                </button>
 
                 <p class="error-message" id="signupError" hidden></p>
 

@@ -83,6 +83,7 @@ const modalCloseBtn = document.getElementById("modalCloseBtn");
 const loginUsername = document.getElementById("loginUsername");
 const loginPassword = document.getElementById("loginPassword");
 const loginSubmitBtn = document.getElementById("loginSubmitBtn");
+const loginSpinner = document.getElementById("loginSpinner");
 const loginError = document.getElementById("loginError");
 const loginNavBtn = document.getElementById("loginNavBtn");
 const historyNavBtn = document.getElementById("historyNavBtn");
@@ -96,6 +97,7 @@ const signupName = document.getElementById("signupName");
 const signupUsername = document.getElementById("signupUsername");
 const signupPassword = document.getElementById("signupPassword");
 const signupSubmitBtn = document.getElementById("signupSubmitBtn");
+const signupSpinner = document.getElementById("signupSpinner");
 const signupError = document.getElementById("signupError");
 const switchToLoginLink = document.getElementById("switchToLoginLink");
 
@@ -114,6 +116,7 @@ function setAuthUI(loggedIn, jumpToAnalyzer = false) {
     homeView = loggedIn && jumpToAnalyzer ? "analyzer" : "promo";
     loginNavBtn.textContent = loggedIn ? "Logout" : "Login";
     historyNavBtn.hidden = !loggedIn;
+    getStartedBtn.hidden = loggedIn;
     renderHomeView();
 }
 
@@ -182,55 +185,78 @@ switchToLoginLink.addEventListener("click", event => {
 
 signupSubmitBtn.addEventListener("click", handleSignup);
 
+function setButtonLoading(button, spinner, isLoading) {
+    button.disabled = isLoading;
+    spinner.hidden = !isLoading;
+}
+
 async function handleSignup() {
     signupError.hidden = true;
+    setButtonLoading(signupSubmitBtn, signupSpinner, true);
 
-    const response = await fetch("/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            name: signupName.value,
-            username: signupUsername.value,
-            password: signupPassword.value,
-        }),
-    });
+    try {
+        const response = await fetch("/signup", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                name: signupName.value,
+                username: signupUsername.value,
+                password: signupPassword.value,
+            }),
+        });
 
-    const data = await response.json();
+        const data = await response.json();
 
-    if (!response.ok) {
-        signupError.textContent = data.detail || "Signup failed.";
+        if (!response.ok) {
+            signupError.textContent = data.detail || "Signup failed.";
+            signupError.hidden = false;
+            return;
+        }
+
+        // Signup succeeded — hand off to the login modal so they sign in
+        // with the credentials they just created (username pre-filled).
+        const newUsername = signupUsername.value;
+        closeSignupModal();
+        loginUsername.value = newUsername;
+        openLoginModal();
+    } catch (error) {
+        console.error(error);
+        signupError.textContent = "Something went wrong, please try again.";
         signupError.hidden = false;
-        return;
+    } finally {
+        setButtonLoading(signupSubmitBtn, signupSpinner, false);
     }
-
-    // Signup succeeded — hand off to the login modal so they sign in
-    // with the credentials they just created (username pre-filled).
-    const newUsername = signupUsername.value;
-    closeSignupModal();
-    loginUsername.value = newUsername;
-    openLoginModal();
 }
 
 async function handleLogin() {
     loginError.hidden = true;
+    setButtonLoading(loginSubmitBtn, loginSpinner, true);
 
-    const response = await fetch("/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            username: loginUsername.value,
-            password: loginPassword.value,
-        }),
-    });
+    try {
+        const response = await fetch("/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                username: loginUsername.value,
+                password: loginPassword.value,
+            }),
+        });
 
-    if (!response.ok) {
-        loginError.textContent = "Invalid username or password.";
+        if (!response.ok) {
+            loginError.textContent = "Invalid username or password.";
+            loginError.hidden = false;
+            return;
+        }
+
+        setAuthUI(true, true);
+        closeLoginModal();
+    } catch (error) {
+        console.error(error);
+        loginError.textContent = "Something went wrong, please try again.";
         loginError.hidden = false;
-        return;
+    } finally {
+        setButtonLoading(loginSubmitBtn, loginSpinner, false);
     }
-
-    setAuthUI(true, true);
-    closeLoginModal();
 }
 
 loginNavBtn.addEventListener("click", async () => {

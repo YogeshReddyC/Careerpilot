@@ -454,6 +454,10 @@ body {
 }
 
 .login-form button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   padding: 12px 24px;
   border: none;
   background: linear-gradient(135deg, var(--accent), var(--accent-dark));
@@ -464,6 +468,11 @@ body {
   border-radius: 10px;
   cursor: pointer;
   box-shadow: 0 4px 14px rgba(124, 92, 255, 0.35);
+}
+
+.login-form button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
 }
 
 .login-form .error-message {
@@ -549,7 +558,6 @@ textarea:focus {
 
 .file-drop {
   position: relative;
-  min-height: 236px;
   display: flex;
 }
 
@@ -564,17 +572,32 @@ textarea:focus {
   flex: 1;
   display: flex;
   align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 14px;
+  justify-content: flex-start;
+  gap: 10px;
+  text-align: left;
+  padding: 12px 14px;
   border: 1.5px dashed var(--border);
-  border-radius: 12px;
+  border-radius: 10px;
   background: #fbfbfe;
   color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
   margin: 0;
+}
+
+.file-drop-icon {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .file-drop.drag-active .file-drop-label,
