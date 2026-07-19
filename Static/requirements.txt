@@ -7,3 +7,5 @@ bcrypt
 python-multipart
 pypdf
 python-docx
+psycopg2-binary
+requests

@@ -101,6 +101,23 @@ const signupSpinner = document.getElementById("signupSpinner");
 const signupError = document.getElementById("signupError");
 const switchToLoginLink = document.getElementById("switchToLoginLink");
 
+const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+const forgotModalOverlay = document.getElementById("forgotModalOverlay");
+const forgotModalCloseBtn = document.getElementById("forgotModalCloseBtn");
+const forgotStep1 = document.getElementById("forgotStep1");
+const forgotStep2 = document.getElementById("forgotStep2");
+const forgotEmail = document.getElementById("forgotEmail");
+const forgotEmailDisplay = document.getElementById("forgotEmailDisplay");
+const sendOtpBtn = document.getElementById("sendOtpBtn");
+const sendOtpSpinner = document.getElementById("sendOtpSpinner");
+const forgotError = document.getElementById("forgotError");
+const resetOtp = document.getElementById("resetOtp");
+const resetNewPassword = document.getElementById("resetNewPassword");
+const resetPasswordBtn = document.getElementById("resetPasswordBtn");
+const resetPasswordSpinner = document.getElementById("resetPasswordSpinner");
+const resetError = document.getElementById("resetError");
+const resendOtpLink = document.getElementById("resendOtpLink");
+
 let isLoggedIn = false;
 
 checkSession();
@@ -188,6 +205,135 @@ signupSubmitBtn.addEventListener("click", handleSignup);
 function setButtonLoading(button, spinner, isLoading) {
     button.disabled = isLoading;
     spinner.hidden = !isLoading;
+}
+
+// --- Forgot password (email OTP) ---
+
+forgotPasswordLink.addEventListener("click", event => {
+    event.preventDefault();
+    closeLoginModal();
+    openForgotModal();
+});
+
+function openForgotModal() {
+    forgotError.hidden = true;
+    resetError.hidden = true;
+    forgotStep1.hidden = false;
+    forgotStep2.hidden = true;
+    forgotEmail.value = loginUsername.value || "";
+    forgotModalOverlay.hidden = false;
+    forgotEmail.focus();
+}
+
+function closeForgotModal() {
+    forgotModalOverlay.hidden = true;
+    forgotEmail.value = "";
+    resetOtp.value = "";
+    resetNewPassword.value = "";
+}
+
+forgotModalCloseBtn.addEventListener("click", closeForgotModal);
+
+forgotModalOverlay.addEventListener("click", event => {
+    if (event.target === forgotModalOverlay) {
+        closeForgotModal();
+    }
+});
+
+sendOtpBtn.addEventListener("click", handleSendOtp);
+resendOtpLink.addEventListener("click", event => {
+    event.preventDefault();
+    handleSendOtp();
+});
+
+async function handleSendOtp() {
+    forgotError.hidden = true;
+    const email = forgotEmail.value.trim();
+
+    if (!email) {
+        forgotError.textContent = "Please enter your email.";
+        forgotError.hidden = false;
+        return;
+    }
+
+    setButtonLoading(sendOtpBtn, sendOtpSpinner, true);
+
+    try {
+        const response = await fetch("/forgot-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username: email }),
+        });
+
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok) {
+            forgotError.textContent = (data && data.detail) || "Something went wrong, please try again.";
+            forgotError.hidden = false;
+            return;
+        }
+
+        forgotEmailDisplay.textContent = email;
+        resetError.hidden = true;
+        forgotStep1.hidden = true;
+        forgotStep2.hidden = false;
+        resetOtp.focus();
+    } catch (error) {
+        console.error(error);
+        forgotError.textContent = "Something went wrong, please try again.";
+        forgotError.hidden = false;
+    } finally {
+        setButtonLoading(sendOtpBtn, sendOtpSpinner, false);
+    }
+}
+
+resetPasswordBtn.addEventListener("click", handleResetPassword);
+
+async function handleResetPassword() {
+    resetError.hidden = true;
+    const otp = resetOtp.value.trim();
+    const newPassword = resetNewPassword.value;
+
+    if (!otp || !newPassword) {
+        resetError.textContent = "Please enter the code and a new password.";
+        resetError.hidden = false;
+        return;
+    }
+
+    setButtonLoading(resetPasswordBtn, resetPasswordSpinner, true);
+
+    try {
+        const response = await fetch("/reset-password", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                username: forgotEmailDisplay.textContent,
+                otp,
+                new_password: newPassword,
+            }),
+        });
+
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok) {
+            resetError.textContent = (data && data.detail) || "Something went wrong, please try again.";
+            resetError.hidden = false;
+            return;
+        }
+
+        // Reset succeeded — hand off to the login modal, same pattern as
+        // signup, so they log in fresh with the password they just set.
+        const resetEmail = forgotEmailDisplay.textContent;
+        closeForgotModal();
+        loginUsername.value = resetEmail;
+        openLoginModal();
+    } catch (error) {
+        console.error(error);
+        resetError.textContent = "Something went wrong, please try again.";
+        resetError.hidden = false;
+    } finally {
+        setButtonLoading(resetPasswordBtn, resetPasswordSpinner, false);
+    }
 }
 
 async function handleSignup() {
@@ -503,7 +649,7 @@ function renderHistory(items) {
 }
 
 function historyItemHtml(item) {
-    const date = new Date(`${item.created_at}Z`).toLocaleString(undefined, {
+    const date = new Date(item.created_at).toLocaleString(undefined, {
         dateStyle: "medium",
         timeStyle: "short",
     });

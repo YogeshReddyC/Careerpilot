@@ -242,11 +242,13 @@
             <p>Enter your credentials to access the resume analyzer.</p>
 
             <div class="login-form">
-                <label for="loginUsername">Username</label>
-                <input type="text" id="loginUsername" placeholder="Username" autocomplete="username">
+                <label for="loginUsername">Email</label>
+                <input type="email" id="loginUsername" placeholder="you@example.com" autocomplete="username">
 
                 <label for="loginPassword">Password</label>
                 <input type="password" id="loginPassword" placeholder="Password" autocomplete="current-password">
+
+                <p class="forgot-password-link"><a href="#" id="forgotPasswordLink">Forgot password?</a></p>
 
                 <button id="loginSubmitBtn">
                     <span class="btn-label">Log In</span>
@@ -271,8 +273,8 @@
                 <label for="signupName">Name</label>
                 <input type="text" id="signupName" placeholder="Your name" autocomplete="name">
 
-                <label for="signupUsername">Username</label>
-                <input type="text" id="signupUsername" placeholder="Choose a username" autocomplete="username">
+                <label for="signupUsername">Email</label>
+                <input type="email" id="signupUsername" placeholder="you@example.com" autocomplete="username">
 
                 <label for="signupPassword">Password</label>
                 <input type="password" id="signupPassword" placeholder="Choose a password (min 6 characters)" autocomplete="new-password">
@@ -285,6 +287,47 @@
                 <p class="error-message" id="signupError" hidden></p>
 
                 <p class="modal-switch">Already have an account? <a href="#" id="switchToLoginLink">Log in</a></p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Forgot password modal — two steps: request a code, then use it to reset -->
+    <div class="modal-overlay" id="forgotModalOverlay" hidden>
+        <div class="modal-card">
+            <button class="modal-close" id="forgotModalCloseBtn" aria-label="Close">&times;</button>
+            <h2>Reset your password</h2>
+
+            <div class="login-form" id="forgotStep1">
+                <p>Enter your account email and we'll send a reset code.</p>
+
+                <label for="forgotEmail">Email</label>
+                <input type="email" id="forgotEmail" placeholder="you@example.com" autocomplete="username">
+
+                <button id="sendOtpBtn">
+                    <span class="btn-label">Send Code</span>
+                    <span class="spinner" id="sendOtpSpinner" hidden></span>
+                </button>
+
+                <p class="error-message" id="forgotError" hidden></p>
+            </div>
+
+            <div class="login-form" id="forgotStep2" hidden>
+                <p>Enter the code sent to <strong id="forgotEmailDisplay"></strong> and choose a new password.</p>
+
+                <label for="resetOtp">Reset code</label>
+                <input type="text" id="resetOtp" placeholder="6-digit code" inputmode="numeric" autocomplete="one-time-code">
+
+                <label for="resetNewPassword">New password</label>
+                <input type="password" id="resetNewPassword" placeholder="New password (min 6 characters)" autocomplete="new-password">
+
+                <button id="resetPasswordBtn">
+                    <span class="btn-label">Reset Password</span>
+                    <span class="spinner" id="resetPasswordSpinner" hidden></span>
+                </button>
+
+                <p class="error-message" id="resetError" hidden></p>
+
+                <p class="modal-switch">Didn't get a code? <a href="#" id="resendOtpLink">Resend</a></p>
             </div>
         </div>
     </div>
