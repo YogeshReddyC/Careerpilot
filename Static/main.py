@@ -4,12 +4,13 @@ import logging
 import os
 import re
 import secrets
+import smtplib
 import time
+from email.mime.text import MIMEText
 
 import bcrypt
 import psycopg2
 import psycopg2.errors
-import requests
 from docx import Document
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, File, Form, HTTPException, Request, UploadFile
@@ -26,12 +27,8 @@ load_dotenv()
 SESSION_SECRET_KEY = os.getenv("SESSION_SECRET_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 DATABASE_URL = os.getenv("DATABASE_URL")
-RESEND_API_KEY = os.getenv("RESEND_API_KEY")
-
-# Sandbox sender — Resend only lets this deliver to the account owner's own
-# email until a custom domain is verified at resend.com/domains. Swap the
-# domain here once one is verified, so real users can receive OTPs too.
-RESEND_FROM_ADDRESS = "CareerPilot <onboarding@resend.dev>"
+GMAIL_ADDRESS = os.getenv("GMAIL_ADDRESS")
+GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
 
 EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -118,28 +115,23 @@ def send_otp_email(to_address: str, otp: str) -> None:
     """Best-effort — never let an email provider hiccup surface as a 500 to
     the client, since /forgot-password always returns the same generic
     success message regardless of whether the send actually worked."""
+    message = MIMEText(
+        f"<p>Your CareerPilot password reset code is:</p>"
+        f"<h2 style='letter-spacing:4px'>{otp}</h2>"
+        f"<p>This code expires in {OTP_EXPIRY_MINUTES} minutes. "
+        f"If you didn't request this, you can ignore this email.</p>",
+        "html",
+    )
+    message["Subject"] = "Your CareerPilot password reset code"
+    message["From"] = GMAIL_ADDRESS
+    message["To"] = to_address
+
     try:
-        response = requests.post(
-            "https://api.resend.com/emails",
-            headers={
-                "Authorization": f"Bearer {RESEND_API_KEY}",
-                "Content-Type": "application/json",
-            },
-            json={
-                "from": RESEND_FROM_ADDRESS,
-                "to": [to_address],
-                "subject": "Your CareerPilot password reset code",
-                "html": (
-                    f"<p>Your CareerPilot password reset code is:</p>"
-                    f"<h2 style='letter-spacing:4px'>{otp}</h2>"
-                    f"<p>This code expires in {OTP_EXPIRY_MINUTES} minutes. "
-                    f"If you didn't request this, you can ignore this email.</p>"
-                ),
-            },
-            timeout=10,
-        )
-        response.raise_for_status()
-    except requests.RequestException:
+        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as server:
+            server.starttls()
+            server.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
+            server.sendmail(GMAIL_ADDRESS, [to_address], message.as_string())
+    except smtplib.SMTPException:
         logger.exception("Failed to send OTP email")
 
 
