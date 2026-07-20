@@ -759,14 +759,11 @@ button#analyzeBtn:disabled {
    scrolling. Sticky so it stays in view as the page scrolls. */
 .company-rail {
   flex-shrink: 0;
-  width: 96px;
+  width: 120px;
   height: 640px;
   overflow: hidden;
   position: sticky;
   top: 84px;
-  border-radius: var(--radius);
-  background: var(--card-bg);
-  border: 1px solid var(--border);
 }
 
 .company-rail::before,
@@ -775,19 +772,19 @@ button#analyzeBtn:disabled {
   position: absolute;
   left: 0;
   right: 0;
-  height: 48px;
+  height: 64px;
   z-index: 1;
   pointer-events: none;
 }
 
 .company-rail::before {
   top: 0;
-  background: linear-gradient(var(--card-bg), transparent);
+  background: linear-gradient(var(--bg), transparent);
 }
 
 .company-rail::after {
   bottom: 0;
-  background: linear-gradient(transparent, var(--card-bg));
+  background: linear-gradient(transparent, var(--bg));
 }
 
 .company-rail-track {
@@ -809,12 +806,12 @@ button#analyzeBtn:disabled {
 }
 
 .company-logo {
-  width: 40px;
-  height: 40px;
+  width: 56px;
+  height: 56px;
   object-fit: contain;
   flex-shrink: 0;
-  filter: grayscale(1);
-  opacity: 0.55;
+  filter: grayscale(1) contrast(0.55);
+  opacity: 0.4;
 }
 
 @media (prefers-reduced-motion: reduce) {
