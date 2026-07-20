@@ -722,22 +722,21 @@ button#analyzeBtn:disabled {
   font-weight: 500;
 }
 
-/* Results */
-
-/* Wraps the results grid with two vertical rails of scrolling company
-   names. Hidden by default; :has() picks up the moment #result loses
-   its [hidden] attribute, so no extra JS wiring is needed. */
-.result-shell {
+/* Analyzer shell: flanks the whole analyzer card (inputs + results)
+   with two vertical rails of scrolling company logos. Visible as soon
+   as the analyzer card itself is — not gated behind having run an
+   analysis yet. :has() ties visibility to #analyzerCard's [hidden]
+   attribute, so no extra JS wiring is needed. */
+.analyzer-shell {
   display: none;
 }
 
-.result-shell:has(#result:not([hidden])) {
+.analyzer-shell:has(#analyzerCard:not([hidden])) {
   display: block;
-  margin-top: 32px;
 }
 
 .result-rail-caption {
-  margin: 0 0 12px;
+  margin: 0 0 16px;
   font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.04em;
@@ -746,19 +745,24 @@ button#analyzeBtn:disabled {
   text-align: center;
 }
 
-.result-columns {
+.analyzer-columns {
   display: flex;
   align-items: flex-start;
+  justify-content: center;
   gap: 20px;
 }
 
-/* Fixed height (not stretched to the results grid, which can run much
-   taller) so the looping track always has more content than the
-   visible window — no blank gap once a pass finishes scrolling.
-   Sticky so it stays in view as the long results list scrolls. */
+.analyzer-columns .card {
+  margin: 0;
+}
+
+/* Fixed height (not stretched to the card, which grows a lot once
+   results render below the form) so the looping track always has more
+   content than the visible window — no blank gap once a pass finishes
+   scrolling. Sticky so it stays in view as the page scrolls. */
 .company-rail {
   flex-shrink: 0;
-  width: 128px;
+  width: 96px;
   height: 640px;
   overflow: hidden;
   position: sticky;
@@ -807,13 +811,13 @@ button#analyzeBtn:disabled {
   to { transform: translateY(0%); }
 }
 
-.company-wordmark {
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--text-secondary);
-  white-space: nowrap;
-  opacity: 0.75;
+.company-logo {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: grayscale(1);
+  opacity: 0.55;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -822,9 +826,13 @@ button#analyzeBtn:disabled {
   }
 }
 
-.result {
-  flex: 1;
-  min-width: 0;
+/* :not([hidden]) rather than a bare .result — an author `display`
+   declaration beats the browser's default [hidden]{display:none}
+   regardless of specificity, so an unconditional `display: grid` here
+   would make the results grid visible (with empty placeholder cards)
+   even while #result still has the hidden attribute. */
+.result:not([hidden]) {
+  margin-top: 32px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
