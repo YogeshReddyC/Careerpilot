@@ -723,6 +723,77 @@ button#analyzeBtn:disabled {
 }
 
 
+/* Single company-logo rail, one side only, with a gap from the card.
+   Visibility toggled in script.js (renderHomeView) alongside
+   #analyzerCard, via the plain [hidden] attribute — not CSS :has(),
+   since that isn't supported in every browser and silently no-ops
+   the whole rule when it isn't. */
+.analyzer-columns {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 64px;
+}
+
+.analyzer-columns .card {
+  margin: 0;
+}
+
+.company-rail {
+  flex-shrink: 0;
+  width: 120px;
+}
+
+.company-rail-caption {
+  margin: 0 0 16px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* Fixed height (not stretched to the card, which grows a lot once
+   results render below the form) so the looping track always has more
+   content than the visible window — no blank gap once a pass finishes
+   scrolling. Sticky so it stays in view as the page scrolls. */
+.company-rail-viewport {
+  height: 600px;
+  overflow: hidden;
+  position: sticky;
+  top: 140px;
+}
+
+.company-rail-track {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding: 24px 0;
+  animation: company-rail-scroll 34s linear infinite;
+}
+
+@keyframes company-rail-scroll {
+  from { transform: translateY(-50%); }
+  to { transform: translateY(0%); }
+}
+
+.company-logo {
+  width: 56px;
+  height: 56px;
+  object-fit: contain;
+  flex-shrink: 0;
+  filter: grayscale(1) contrast(0.55);
+  opacity: 0.4;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .company-rail-track {
+    animation: none;
+  }
+}
+
 /* :not([hidden]) rather than a bare .result — an author `display`
    declaration beats the browser's default [hidden]{display:none}
    regardless of specificity, so an unconditional `display: grid` here
@@ -975,6 +1046,10 @@ button#analyzeBtn:disabled {
     order: 3;
     width: 100%;
     justify-content: center;
+  }
+
+  .company-rail {
+    display: none;
   }
 
   .main-area {
