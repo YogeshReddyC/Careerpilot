@@ -4,9 +4,7 @@ import logging
 import os
 import re
 import secrets
-import smtplib
 import time
-from email.mime.text import MIMEText
 
 import bcrypt
 import psycopg2
@@ -20,6 +18,8 @@ from google import genai
 from psycopg2.extras import Json, RealDictCursor
 from pydantic import BaseModel
 from pypdf import PdfReader
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 from starlette.middleware.sessions import SessionMiddleware
 
 load_dotenv()
@@ -27,8 +27,8 @@ load_dotenv()
 SESSION_SECRET_KEY = os.getenv("SESSION_SECRET_KEY")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 DATABASE_URL = os.getenv("DATABASE_URL")
-GMAIL_ADDRESS = os.getenv("GMAIL_ADDRESS")
-GMAIL_APP_PASSWORD = os.getenv("GMAIL_APP_PASSWORD")
+SENDGRID_API_KEY = os.getenv("SENDGRID_API_KEY")
+SENDGRID_FROM_EMAIL = os.getenv("SENDGRID_FROM_EMAIL")
 
 EMAIL_REGEX = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
@@ -115,23 +115,21 @@ def send_otp_email(to_address: str, otp: str) -> None:
     """Best-effort — never let an email provider hiccup surface as a 500 to
     the client, since /forgot-password always returns the same generic
     success message regardless of whether the send actually worked."""
-    message = MIMEText(
-        f"<p>Your CareerPilot password reset code is:</p>"
-        f"<h2 style='letter-spacing:4px'>{otp}</h2>"
-        f"<p>This code expires in {OTP_EXPIRY_MINUTES} minutes. "
-        f"If you didn't request this, you can ignore this email.</p>",
-        "html",
+    message = Mail(
+        from_email=SENDGRID_FROM_EMAIL,
+        to_emails=to_address,
+        subject="Your CareerPilot password reset code",
+        html_content=(
+            f"<p>Your CareerPilot password reset code is:</p>"
+            f"<h2 style='letter-spacing:4px'>{otp}</h2>"
+            f"<p>This code expires in {OTP_EXPIRY_MINUTES} minutes. "
+            f"If you didn't request this, you can ignore this email.</p>"
+        ),
     )
-    message["Subject"] = "Your CareerPilot password reset code"
-    message["From"] = GMAIL_ADDRESS
-    message["To"] = to_address
 
     try:
-        with smtplib.SMTP("smtp.gmail.com", 587, timeout=10) as server:
-            server.starttls()
-            server.login(GMAIL_ADDRESS, GMAIL_APP_PASSWORD)
-            server.sendmail(GMAIL_ADDRESS, [to_address], message.as_string())
-    except smtplib.SMTPException:
+        SendGridAPIClient(SENDGRID_API_KEY).send(message)
+    except Exception:
         logger.exception("Failed to send OTP email")
 
 
