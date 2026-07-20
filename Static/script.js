@@ -78,7 +78,6 @@ function updateHeaderVisibility() {
 
 const heroPromo = document.getElementById("heroPromo");
 const analyzerCard = document.getElementById("analyzerCard");
-const analyzerShell = document.getElementById("analyzerShell");
 const loginModalOverlay = document.getElementById("loginModalOverlay");
 const modalCloseBtn = document.getElementById("modalCloseBtn");
 const loginUsername = document.getElementById("loginUsername");
@@ -144,7 +143,6 @@ function setAuthUI(loggedIn, jumpToAnalyzer = false) {
 function renderHomeView() {
     heroPromo.hidden = homeView !== "promo";
     analyzerCard.hidden = !(isLoggedIn && homeView === "analyzer");
-    analyzerShell.hidden = analyzerCard.hidden;
     updateHeaderVisibility();
 }
 
