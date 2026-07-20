@@ -132,6 +132,7 @@ function setAuthUI(loggedIn, jumpToAnalyzer = false) {
     isLoggedIn = loggedIn;
     homeView = loggedIn && jumpToAnalyzer ? "analyzer" : "promo";
     loginNavBtn.textContent = loggedIn ? "Logout" : "Login";
+    loginNavBtn.classList.toggle("is-logout", loggedIn);
     historyNavBtn.hidden = !loggedIn;
     getStartedBtn.hidden = loggedIn;
     renderHomeView();

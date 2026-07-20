@@ -141,6 +141,14 @@ body {
   background: var(--accent-soft);
 }
 
+/* Logout uses the same neutral ghost shape as Login, but hints red on
+   hover since it ends the session rather than starting one. */
+.btn-ghost.is-logout:hover {
+  border-color: var(--danger);
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
 .btn-primary {
   padding: 10px 18px;
   border: none;
@@ -460,19 +468,45 @@ body {
   gap: 10px;
   padding: 12px 24px;
   border: none;
-  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
   color: white;
   font-family: "Inter", sans-serif;
   font-size: 14px;
   font-weight: 600;
   border-radius: 10px;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(124, 92, 255, 0.35);
+  transition: transform 0.15s, box-shadow 0.15s;
 }
 
 .login-form button:disabled {
   opacity: 0.7;
   cursor: not-allowed;
+}
+
+/* Sign Up and Analyze share the brand-purple gradient — the "create
+   something new" action. */
+#signupSubmitBtn {
+  background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+  box-shadow: 0 4px 14px rgba(124, 92, 255, 0.35);
+}
+
+/* Log In is a returning-user action, not a "new" one — kept visually
+   quieter (dark neutral) so it doesn't compete with Sign Up. */
+#loginSubmitBtn {
+  background: linear-gradient(135deg, #383a52, #1a1b2e);
+  box-shadow: 0 4px 14px rgba(26, 27, 46, 0.3);
+}
+
+/* Password-recovery flow (Send Code / Reset Password) gets the brand's
+   secondary teal, signaling "account recovery" as distinct from normal
+   sign-up/login actions. */
+#sendOtpBtn,
+#resetPasswordBtn {
+  background: linear-gradient(135deg, var(--accent-2), #1b9e93);
+  box-shadow: 0 4px 14px rgba(34, 211, 198, 0.35);
+}
+
+.login-form button:hover:not(:disabled) {
+  transform: translateY(-1px);
 }
 
 .forgot-password-link {
@@ -690,11 +724,110 @@ button#analyzeBtn:disabled {
 
 /* Results */
 
+/* Wraps the results grid with two vertical rails of scrolling company
+   names. Hidden by default; :has() picks up the moment #result loses
+   its [hidden] attribute, so no extra JS wiring is needed. */
+.result-shell {
+  display: none;
+}
+
+.result-shell:has(#result:not([hidden])) {
+  display: block;
+  margin-top: 32px;
+}
+
+.result-rail-caption {
+  margin: 0 0 12px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.result-columns {
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+}
+
+/* Fixed height (not stretched to the results grid, which can run much
+   taller) so the looping track always has more content than the
+   visible window — no blank gap once a pass finishes scrolling.
+   Sticky so it stays in view as the long results list scrolls. */
+.company-rail {
+  flex-shrink: 0;
+  width: 128px;
+  height: 640px;
+  overflow: hidden;
+  position: sticky;
+  top: 84px;
+  border-radius: var(--radius);
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+}
+
+.company-rail::before,
+.company-rail::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 48px;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.company-rail::before {
+  top: 0;
+  background: linear-gradient(var(--card-bg), transparent);
+}
+
+.company-rail::after {
+  bottom: 0;
+  background: linear-gradient(transparent, var(--card-bg));
+}
+
+.company-rail-track {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding: 24px 0;
+  animation: company-rail-scroll 26s linear infinite;
+}
+
+.company-rail-right .company-rail-track {
+  animation-duration: 32s;
+}
+
+@keyframes company-rail-scroll {
+  from { transform: translateY(-50%); }
+  to { transform: translateY(0%); }
+}
+
+.company-wordmark {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  opacity: 0.75;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .company-rail-track {
+    animation: none;
+  }
+}
+
 .result {
+  flex: 1;
+  min-width: 0;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
-  margin-top: 32px;
 }
 
 .result-card {
@@ -941,6 +1074,10 @@ button#analyzeBtn:disabled {
 
   .main-area {
     padding: 24px 16px 48px;
+  }
+
+  .company-rail {
+    display: none;
   }
 
   .card {
