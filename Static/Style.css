@@ -725,15 +725,12 @@ button#analyzeBtn:disabled {
 /* Analyzer shell: flanks the whole analyzer card (inputs + results)
    with two vertical rails of scrolling company logos. Visible as soon
    as the analyzer card itself is — not gated behind having run an
-   analysis yet. :has() ties visibility to #analyzerCard's [hidden]
-   attribute, so no extra JS wiring is needed. */
-.analyzer-shell {
-  display: none;
-}
-
-.analyzer-shell:has(#analyzerCard:not([hidden])) {
-  display: block;
-}
+   analysis yet. Visibility toggled in script.js (renderHomeView),
+   in step with #analyzerCard, via the plain [hidden] attribute —
+   deliberately not CSS :has(), since that isn't supported in every
+   browser and silently no-ops the whole rule when it isn't.
+   No `display` declared here for the same reason .result was buggy:
+   an unconditional `display` on this class would override [hidden]. */
 
 .result-rail-caption {
   margin: 0 0 16px;
