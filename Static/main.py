@@ -912,6 +912,26 @@ def get_history(request: Request, _: None = Depends(require_login)):
     return list(rows)
 
 
+@app.delete("/api/history/{analysis_id}")
+def delete_history_item(analysis_id: int, request: Request, _: None = Depends(require_login)):
+    user_id = request.session.get("user_id")
+    if user_id is None:
+        raise HTTPException(status_code=401, detail="Not logged in")
+
+    conn = get_db()
+    cur = conn.cursor()
+    # user_id scoped in the WHERE clause itself, not just checked after —
+    # so a user can never delete another user's row by guessing an id.
+    cur.execute("DELETE FROM analyses WHERE id = %s AND user_id = %s", (analysis_id, user_id))
+    deleted = cur.rowcount
+    conn.commit()
+    conn.close()
+
+    if deleted == 0:
+        raise HTTPException(status_code=404, detail="Analysis not found")
+    return {"success": True}
+
+
 @app.get("/api/history/trends")
 def get_history_trends(request: Request, _: None = Depends(require_login)):
     """Pure SQL aggregation over existing analyses — no Gemini call. Score

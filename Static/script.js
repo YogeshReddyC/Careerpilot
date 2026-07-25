@@ -809,6 +809,28 @@ const expandTailorResumePreview = setupCollapseToggle("collapseTailorResumeBtn",
 const expandCoverLetterText = setupCollapseToggle("collapseCoverLetterBtn", coverLetterText);
 const expandAtsCheckBody = setupCollapseToggle("collapseAtsCheckBtn", atsCheckBody);
 
+// Wires a "x" button to fully hide the panel and clear its content —
+// unlike collapse, this is a hard reset: nothing is saved here, so
+// getting it back just means clicking the generate button again.
+function setupDeleteButton(buttonId, panelEl, onDelete) {
+    document.getElementById(buttonId).addEventListener("click", () => {
+        panelEl.hidden = true;
+        onDelete();
+    });
+}
+
+setupDeleteButton("deleteTailorResumeBtn", tailorResumeOutput, () => {
+    currentTailoredResumeText = "";
+    tailorResumePreview.innerHTML = "";
+});
+setupDeleteButton("deleteCoverLetterBtn", coverLetterOutput, () => {
+    coverLetterText.textContent = "";
+});
+setupDeleteButton("deleteAtsCheckBtn", atsCheckOutput, () => {
+    atsIssuesList.innerHTML = "";
+    atsPassedList.innerHTML = "";
+});
+
 function hideOutputPanels() {
     tailorResumeOutput.hidden = true;
     coverLetterOutput.hidden = true;
@@ -1218,13 +1240,36 @@ function renderHistory(items) {
     historyEmpty.hidden = true;
     historyList.innerHTML = items.map(historyItemHtml).join("");
 
-    historyList.querySelectorAll(".history-item-header").forEach(header => {
-        header.addEventListener("click", () => {
-            const body = header.nextElementSibling;
+    historyList.querySelectorAll(".history-item-toggle").forEach(toggle => {
+        toggle.addEventListener("click", () => {
+            const body = toggle.closest(".history-item").querySelector(".history-item-body");
             body.hidden = !body.hidden;
-            header.classList.toggle("expanded", !body.hidden);
+            toggle.classList.toggle("expanded", !body.hidden);
         });
     });
+
+    historyList.querySelectorAll(".btn-delete-history").forEach(button => {
+        button.addEventListener("click", () => handleDeleteHistoryItem(button));
+    });
+}
+
+async function handleDeleteHistoryItem(button) {
+    const analysisId = button.dataset.id;
+    if (!window.confirm("Delete this analysis? This can't be undone.")) return;
+
+    button.disabled = true;
+    try {
+        const response = await fetch(`/api/history/${analysisId}`, { method: "DELETE" });
+        if (!response.ok) return;
+        button.closest(".history-item").remove();
+        if (!historyList.querySelector(".history-item")) {
+            historyEmpty.hidden = false;
+        }
+    } catch (error) {
+        console.error(error);
+    } finally {
+        button.disabled = false;
+    }
 }
 
 function historyItemHtml(item) {
@@ -1239,17 +1284,20 @@ function historyItemHtml(item) {
 
     return `
         <div class="history-item">
-            <button type="button" class="history-item-header">
-                <div class="history-item-summary">
-                    <span class="history-score-badge fit-${escapeHtml(fitClass)}">${item.score}%</span>
-                    <div class="history-item-meta">
-                        <div class="history-item-title">${escapeHtml(item.resume_filename)}</div>
-                        <div class="history-item-sub">${escapeHtml(date)} &middot; ${escapeHtml(item.fit)} fit</div>
-                        <div class="history-item-jd">${escapeHtml(jdSnippet)}</div>
+            <div class="history-item-header">
+                <button type="button" class="history-item-toggle">
+                    <div class="history-item-summary">
+                        <span class="history-score-badge fit-${escapeHtml(fitClass)}">${item.score}%</span>
+                        <div class="history-item-meta">
+                            <div class="history-item-title">${escapeHtml(item.resume_filename)}</div>
+                            <div class="history-item-sub">${escapeHtml(date)} &middot; ${escapeHtml(item.fit)} fit</div>
+                            <div class="history-item-jd">${escapeHtml(jdSnippet)}</div>
+                        </div>
                     </div>
-                </div>
-                <span class="history-chevron">&#8964;</span>
-            </button>
+                    <span class="history-chevron">&#8964;</span>
+                </button>
+                <button type="button" class="btn-delete btn-delete-history" data-id="${item.id}" aria-label="Delete this analysis">&times;</button>
+            </div>
             <div class="history-item-body" hidden>
                 <div class="result-card result-matched">
                     <div class="result-icon">&#10003;</div>
