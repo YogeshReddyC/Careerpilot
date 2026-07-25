@@ -1287,6 +1287,46 @@ button#analyzeBtn:disabled {
   overflow-y: auto;
 }
 
+.btn-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tailored-resume-preview {
+  max-height: 480px;
+  overflow-y: auto;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-primary);
+}
+
+.tailored-resume-preview h4 {
+  margin: 16px 0 6px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent-dark);
+}
+
+.tailored-resume-preview h4:first-child {
+  margin-top: 0;
+}
+
+.tailored-resume-preview p {
+  margin: 0 0 8px;
+}
+
+.tailored-resume-preview ul {
+  margin: 0 0 8px;
+  padding-left: 20px;
+}
+
+.tailored-resume-preview li {
+  margin-bottom: 4px;
+}
+
 .ats-section h4 {
   margin: 16px 0 8px;
   font-size: 12px;

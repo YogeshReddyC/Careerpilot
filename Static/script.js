@@ -468,6 +468,10 @@ const postAnalysisError = document.getElementById("postAnalysisError");
 const tailorResumeBtn = document.getElementById("tailorResumeBtn");
 const tailorResumeSpinner = document.getElementById("tailorResumeSpinner");
 const tailorResumeOutput = document.getElementById("tailorResumeOutput");
+const tailorResumePreview = document.getElementById("tailorResumePreview");
+const downloadTailorResumeBtn = document.getElementById("downloadTailorResumeBtn");
+const downloadTailorResumeSpinner = document.getElementById("downloadTailorResumeSpinner");
+let currentTailoredResumeText = "";
 const coverLetterBtn = document.getElementById("coverLetterBtn");
 const coverLetterSpinner = document.getElementById("coverLetterSpinner");
 const coverLetterOutput = document.getElementById("coverLetterOutput");
@@ -766,6 +770,7 @@ function batchResultItemHtml(item, index) {
 // Each reuses the same resume file + job description already in the form.
 
 tailorResumeBtn.addEventListener("click", handleTailorResume);
+downloadTailorResumeBtn.addEventListener("click", handleDownloadTailoredResumePdf);
 coverLetterBtn.addEventListener("click", handleCoverLetter);
 atsCheckBtn.addEventListener("click", handleAtsCheck);
 copyCoverLetterBtn.addEventListener("click", () => copyToClipboard(coverLetterText.textContent, copyCoverLetterBtn));
@@ -788,6 +793,54 @@ function hideOutputPanels() {
     postAnalysisError.hidden = true;
 }
 
+function escapeHtml(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Turns the plain "ALL CAPS headers / '- ' bullets" text Gemini returns
+// into a readable preview — headings, bullet lists, and paragraphs.
+function formatTailoredResumeHtml(text) {
+    let html = "";
+    let inList = false;
+    for (const rawLine of text.split("\n")) {
+        const line = rawLine.trim();
+        if (!line) {
+            if (inList) { html += "</ul>"; inList = false; }
+            continue;
+        }
+        if (line.startsWith("- ") || line.startsWith("-")) {
+            if (!inList) { html += "<ul>"; inList = true; }
+            html += `<li>${escapeHtml(line.replace(/^-\s*/, ""))}</li>`;
+        } else if (line === line.toUpperCase() && line.length <= 40) {
+            if (inList) { html += "</ul>"; inList = false; }
+            html += `<h4>${escapeHtml(line)}</h4>`;
+        } else {
+            if (inList) { html += "</ul>"; inList = false; }
+            html += `<p>${escapeHtml(line)}</p>`;
+        }
+    }
+    if (inList) html += "</ul>";
+    return html;
+}
+
+// Cycles the button's label through progress phrases while a slow AI call
+// is in flight, instead of leaving it stuck on the original button text.
+function startStatusCycle(labelEl, phrases) {
+    let i = 0;
+    labelEl.textContent = phrases[0];
+    const interval = setInterval(() => {
+        i = (i + 1) % phrases.length;
+        labelEl.textContent = phrases[i];
+    }, 2500);
+    const originalText = labelEl.textContent;
+    return (restoreText) => {
+        clearInterval(interval);
+        labelEl.textContent = restoreText !== undefined ? restoreText : originalText;
+    };
+}
+
 async function handleTailorResume() {
     const resumeFile = resumeFileInput.files[0];
     const jobDescription = jdInput.value.trim();
@@ -795,6 +848,10 @@ async function handleTailorResume() {
 
     postAnalysisError.hidden = true;
     setButtonLoading(tailorResumeBtn, tailorResumeSpinner, true);
+    const stopStatusCycle = startStatusCycle(
+        tailorResumeBtn.querySelector(".btn-label"),
+        ["Tailoring your resume…", "Please wait…", "Almost done…"]
+    );
 
     try {
         const formData = new FormData();
@@ -808,14 +865,43 @@ async function handleTailorResume() {
             return;
         }
 
-        const blob = await response.blob();
-        downloadBlob(blob, "tailored_resume.docx");
+        const data = await response.json();
+        currentTailoredResumeText = data.tailored_resume;
+        tailorResumePreview.innerHTML = formatTailoredResumeHtml(currentTailoredResumeText);
         tailorResumeOutput.hidden = false;
     } catch (error) {
         console.error(error);
         showPostAnalysisError("Something went wrong, please try again.");
     } finally {
         setButtonLoading(tailorResumeBtn, tailorResumeSpinner, false);
+        stopStatusCycle("Tailor My Resume");
+    }
+}
+
+async function handleDownloadTailoredResumePdf() {
+    if (!currentTailoredResumeText) return;
+
+    postAnalysisError.hidden = true;
+    setButtonLoading(downloadTailorResumeBtn, downloadTailorResumeSpinner, true);
+
+    try {
+        const formData = new FormData();
+        formData.append("tailored_resume", currentTailoredResumeText);
+
+        const response = await fetch("/tailor-resume/pdf", { method: "POST", body: formData });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            showPostAnalysisError((errorData && errorData.detail) || "Something went wrong, please try again.");
+            return;
+        }
+
+        const blob = await response.blob();
+        downloadBlob(blob, "tailored_resume.pdf");
+    } catch (error) {
+        console.error(error);
+        showPostAnalysisError("Something went wrong, please try again.");
+    } finally {
+        setButtonLoading(downloadTailorResumeBtn, downloadTailorResumeSpinner, false);
     }
 }
 
