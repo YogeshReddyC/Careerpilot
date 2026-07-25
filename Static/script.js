@@ -461,6 +461,7 @@ const analyzeBtn = document.getElementById("analyzeBtn");
 const spinner = document.getElementById("spinner");
 const errorMessage = document.getElementById("errorMessage");
 const resultSection = document.getElementById("result");
+const companyRail = document.getElementById("companyRail");
 
 const ALLOWED_RESUME_EXTENSIONS = [".pdf", ".docx"];
 
@@ -508,6 +509,7 @@ async function handleAnalyze() {
 
     hideError();
     resultSection.hidden = true;
+    companyRail.hidden = false;
 
     if (!resumeFile || jobDescription === "") {
         showError("Please upload your resume and fill in the job description.");
@@ -575,6 +577,7 @@ function renderResult(data) {
     renderListOrText("resultSuggestions", data.suggestions);
     renderScore(data.score, data.matched_keywords, data.missing_keywords);
     resultSection.hidden = false;
+    companyRail.hidden = true;
 }
 
 function renderScore(score, matchedKeywords, missingKeywords) {
