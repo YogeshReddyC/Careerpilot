@@ -723,25 +723,25 @@ button#analyzeBtn:disabled {
 }
 
 
-/* Single company-logo rail, one side only, with a gap from the card.
-   Visibility toggled in script.js (renderHomeView) alongside
-   #analyzerCard, via the plain [hidden] attribute — not CSS :has(),
-   since that isn't supported in every browser and silently no-ops
-   the whole rule when it isn't. */
 .analyzer-columns {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  gap: 64px;
 }
 
 .analyzer-columns .card {
   margin: 0;
 }
 
+/* Full-width horizontal logo strip below the analyzer card, scrolling
+   left-to-right. Hidden once an analysis result is showing (toggled in
+   script.js alongside #result), via the plain [hidden] attribute — not
+   CSS :has(), since that isn't supported in every browser and silently
+   no-ops the whole rule when it isn't. */
 .company-rail {
-  flex-shrink: 0;
-  width: 120px;
+  width: 100%;
+  max-width: 900px;
+  margin: 40px auto 0;
 }
 
 .company-rail-caption {
@@ -754,29 +754,24 @@ button#analyzeBtn:disabled {
   text-align: center;
 }
 
-/* Fixed height (not stretched to the card, which grows a lot once
-   results render below the form) so the looping track always has more
-   content than the visible window — no blank gap once a pass finishes
-   scrolling. Sticky so it stays in view as the page scrolls. */
 .company-rail-viewport {
-  height: 600px;
+  width: 100%;
   overflow: hidden;
-  position: sticky;
-  top: 140px;
 }
 
 .company-rail-track {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 32px;
-  padding: 24px 0;
+  gap: 48px;
+  padding: 8px 0;
+  width: max-content;
   animation: company-rail-scroll 34s linear infinite;
 }
 
 @keyframes company-rail-scroll {
-  from { transform: translateY(-50%); }
-  to { transform: translateY(0%); }
+  from { transform: translateX(0%); }
+  to { transform: translateX(-50%); }
 }
 
 .company-logo {
