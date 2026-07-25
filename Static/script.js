@@ -463,6 +463,34 @@ const errorMessage = document.getElementById("errorMessage");
 const resultSection = document.getElementById("result");
 const companyRail = document.getElementById("companyRail");
 
+const postAnalysisActions = document.getElementById("postAnalysisActions");
+const postAnalysisError = document.getElementById("postAnalysisError");
+const tailorResumeBtn = document.getElementById("tailorResumeBtn");
+const tailorResumeSpinner = document.getElementById("tailorResumeSpinner");
+const tailorResumeOutput = document.getElementById("tailorResumeOutput");
+const tailorResumeText = document.getElementById("tailorResumeText");
+const copyTailorResumeBtn = document.getElementById("copyTailorResumeBtn");
+const coverLetterBtn = document.getElementById("coverLetterBtn");
+const coverLetterSpinner = document.getElementById("coverLetterSpinner");
+const coverLetterOutput = document.getElementById("coverLetterOutput");
+const coverLetterText = document.getElementById("coverLetterText");
+const copyCoverLetterBtn = document.getElementById("copyCoverLetterBtn");
+const atsCheckBtn = document.getElementById("atsCheckBtn");
+const atsCheckSpinner = document.getElementById("atsCheckSpinner");
+const atsCheckOutput = document.getElementById("atsCheckOutput");
+const atsIssuesList = document.getElementById("atsIssuesList");
+const atsPassedList = document.getElementById("atsPassedList");
+
+const batchModeToggle = document.getElementById("batchModeToggle");
+const singleModeToggle = document.getElementById("singleModeToggle");
+const batchJdSection = document.getElementById("batchJdSection");
+const batchJdList = document.getElementById("batchJdList");
+const addJdBtn = document.getElementById("addJdBtn");
+const batchResults = document.getElementById("batchResults");
+const batchResultsList = document.getElementById("batchResultsList");
+const MAX_BATCH_JOBS = 10;
+let isBatchMode = false;
+
 const ALLOWED_RESUME_EXTENSIONS = [".pdf", ".docx"];
 
 updateCharCount(jdInput, jdCount);
@@ -504,12 +532,22 @@ function hasAllowedExtension(filename) {
 analyzeBtn.addEventListener("click", handleAnalyze);
 
 async function handleAnalyze() {
+    if (isBatchMode) {
+        await handleBatchAnalyze();
+    } else {
+        await handleSingleAnalyze();
+    }
+}
+
+async function handleSingleAnalyze() {
     const resumeFile = resumeFileInput.files[0];
     const jobDescription = jdInput.value.trim();
 
     hideError();
     resultSection.hidden = true;
+    postAnalysisActions.hidden = true;
     companyRail.hidden = false;
+    hideOutputPanels();
 
     if (!resumeFile || jobDescription === "") {
         showError("Please upload your resume and fill in the job description.");
@@ -546,6 +584,8 @@ async function handleAnalyze() {
 
         const data = await response.json();
         renderResult(data);
+        postAnalysisActions.hidden = false;
+        companyRail.hidden = true;
 
     } catch (error) {
         console.error(error);
@@ -553,6 +593,303 @@ async function handleAnalyze() {
     } finally {
         setLoading(false);
     }
+}
+
+// --- Batch mode: same resume against multiple job descriptions ---
+
+batchModeToggle.addEventListener("click", () => setBatchMode(true));
+singleModeToggle.addEventListener("click", () => setBatchMode(false));
+
+function setBatchMode(enabled) {
+    isBatchMode = enabled;
+    jdInput.hidden = enabled;
+    jdCount.hidden = enabled;
+    batchModeToggle.hidden = enabled;
+    batchJdSection.hidden = !enabled;
+
+    hideError();
+    resultSection.hidden = true;
+    postAnalysisActions.hidden = true;
+    companyRail.hidden = false;
+    hideOutputPanels();
+    batchResults.hidden = true;
+}
+
+addJdBtn.addEventListener("click", () => {
+    const currentCount = batchJdList.querySelectorAll(".batch-jd-item").length;
+    if (currentCount >= MAX_BATCH_JOBS) return;
+
+    const item = document.createElement("div");
+    item.className = "batch-jd-item";
+    item.innerHTML = `
+        <textarea class="batch-jd-textarea" rows="6" placeholder="Paste job description #${currentCount + 1}..."></textarea>
+        <button type="button" class="btn-remove-jd" aria-label="Remove this job description">&times;</button>
+    `;
+    batchJdList.appendChild(item);
+    updateRemoveJdButtonsVisibility();
+});
+
+batchJdList.addEventListener("click", event => {
+    if (event.target.classList.contains("btn-remove-jd")) {
+        event.target.closest(".batch-jd-item").remove();
+        updateRemoveJdButtonsVisibility();
+    }
+});
+
+function updateRemoveJdButtonsVisibility() {
+    const items = batchJdList.querySelectorAll(".batch-jd-item");
+    items.forEach(item => {
+        item.querySelector(".btn-remove-jd").hidden = items.length <= 1;
+    });
+}
+
+async function handleBatchAnalyze() {
+    const resumeFile = resumeFileInput.files[0];
+    const jobDescriptions = Array.from(batchJdList.querySelectorAll(".batch-jd-textarea"))
+        .map(textarea => textarea.value.trim())
+        .filter(Boolean);
+
+    hideError();
+    batchResults.hidden = true;
+    companyRail.hidden = false;
+
+    if (!resumeFile) {
+        showError("Please upload your resume.");
+        return;
+    }
+    if (!hasAllowedExtension(resumeFile.name)) {
+        showError("Please upload a PDF or DOCX file.");
+        return;
+    }
+    if (jobDescriptions.length === 0) {
+        showError("Please paste at least one job description.");
+        return;
+    }
+    if (jobDescriptions.some(jd => jd.length > MAX_CHARS)) {
+        showError(`Each job description must be under ${MAX_CHARS.toLocaleString()} characters.`);
+        return;
+    }
+
+    setLoading(true);
+
+    try {
+        const formData = new FormData();
+        formData.append("resume_file", resumeFile);
+        formData.append("job_descriptions", JSON.stringify(jobDescriptions));
+
+        const response = await fetch("/analyze-batch", {
+            method: "POST",
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            showError((errorData && errorData.detail) || "Something went wrong, please try again.");
+            return;
+        }
+
+        const data = await response.json();
+        renderBatchResults(data.results);
+
+    } catch (error) {
+        console.error(error);
+        showError("Something went wrong, please try again.");
+    } finally {
+        setLoading(false);
+    }
+}
+
+function renderBatchResults(results) {
+    batchResultsList.innerHTML = results.map(batchResultItemHtml).join("");
+    batchResults.hidden = false;
+    companyRail.hidden = true;
+
+    batchResultsList.querySelectorAll(".batch-result-header").forEach(header => {
+        header.addEventListener("click", () => {
+            const body = header.nextElementSibling;
+            body.hidden = !body.hidden;
+            header.classList.toggle("expanded", !body.hidden);
+        });
+    });
+}
+
+function batchResultItemHtml(item, index) {
+    const fitClass = (item.fit || "").toLowerCase();
+    return `
+        <div class="batch-result-item">
+            <button type="button" class="batch-result-header">
+                <span class="batch-result-rank">#${index + 1}</span>
+                <span class="history-score-badge fit-${escapeHtml(fitClass)}">${item.score}%</span>
+                <span class="batch-result-jd-preview">${escapeHtml(item.job_description_preview)}&hellip;</span>
+                <span class="history-chevron">&#8964;</span>
+            </button>
+            <div class="batch-result-body" hidden>
+                <div class="result-card result-matched">
+                    <div class="result-icon">&#10003;</div>
+                    <div class="result-body">
+                        <h3>Matched Keywords</h3>
+                        <div class="keyword-chips">${keywordChipsHtml(item.matched_keywords, "chip-matched")}</div>
+                    </div>
+                </div>
+                <div class="result-card result-missing">
+                    <div class="result-icon">!</div>
+                    <div class="result-body">
+                        <h3>Missing Keywords</h3>
+                        <div class="keyword-chips">${keywordChipsHtml(item.missing_keywords, "chip-missing")}</div>
+                    </div>
+                </div>
+                <div class="result-card result-strengths">
+                    <div class="result-icon">&#10003;</div>
+                    <div class="result-body">
+                        <h3>Strengths</h3>
+                        ${listOrTextHtml(item.strengths)}
+                    </div>
+                </div>
+                <div class="result-card result-gaps">
+                    <div class="result-icon">!</div>
+                    <div class="result-body">
+                        <h3>Gaps</h3>
+                        ${listOrTextHtml(item.gaps)}
+                    </div>
+                </div>
+                <div class="result-card result-suggestions">
+                    <div class="result-icon">&#8594;</div>
+                    <div class="result-body">
+                        <h3>Suggestions</h3>
+                        ${listOrTextHtml(item.suggestions)}
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+// --- Post-analysis actions: tailored resume, cover letter, ATS check ---
+// Each reuses the same resume file + job description already in the form.
+
+tailorResumeBtn.addEventListener("click", handleTailorResume);
+coverLetterBtn.addEventListener("click", handleCoverLetter);
+atsCheckBtn.addEventListener("click", handleAtsCheck);
+copyTailorResumeBtn.addEventListener("click", () => copyToClipboard(tailorResumeText.textContent, copyTailorResumeBtn));
+copyCoverLetterBtn.addEventListener("click", () => copyToClipboard(coverLetterText.textContent, copyCoverLetterBtn));
+
+function hideOutputPanels() {
+    tailorResumeOutput.hidden = true;
+    coverLetterOutput.hidden = true;
+    atsCheckOutput.hidden = true;
+    postAnalysisError.hidden = true;
+}
+
+async function handleTailorResume() {
+    const resumeFile = resumeFileInput.files[0];
+    const jobDescription = jdInput.value.trim();
+    if (!resumeFile || !jobDescription) return;
+
+    postAnalysisError.hidden = true;
+    setButtonLoading(tailorResumeBtn, tailorResumeSpinner, true);
+
+    try {
+        const formData = new FormData();
+        formData.append("resume_file", resumeFile);
+        formData.append("job_description", jobDescription);
+
+        const response = await fetch("/tailor-resume", { method: "POST", body: formData });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            showPostAnalysisError((errorData && errorData.detail) || "Something went wrong, please try again.");
+            return;
+        }
+
+        const data = await response.json();
+        tailorResumeText.textContent = data.tailored_resume;
+        tailorResumeOutput.hidden = false;
+    } catch (error) {
+        console.error(error);
+        showPostAnalysisError("Something went wrong, please try again.");
+    } finally {
+        setButtonLoading(tailorResumeBtn, tailorResumeSpinner, false);
+    }
+}
+
+async function handleCoverLetter() {
+    const resumeFile = resumeFileInput.files[0];
+    const jobDescription = jdInput.value.trim();
+    if (!resumeFile || !jobDescription) return;
+
+    postAnalysisError.hidden = true;
+    setButtonLoading(coverLetterBtn, coverLetterSpinner, true);
+
+    try {
+        const formData = new FormData();
+        formData.append("resume_file", resumeFile);
+        formData.append("job_description", jobDescription);
+
+        const response = await fetch("/generate-cover-letter", { method: "POST", body: formData });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            showPostAnalysisError((errorData && errorData.detail) || "Something went wrong, please try again.");
+            return;
+        }
+
+        const data = await response.json();
+        coverLetterText.textContent = data.cover_letter;
+        coverLetterOutput.hidden = false;
+    } catch (error) {
+        console.error(error);
+        showPostAnalysisError("Something went wrong, please try again.");
+    } finally {
+        setButtonLoading(coverLetterBtn, coverLetterSpinner, false);
+    }
+}
+
+async function handleAtsCheck() {
+    const resumeFile = resumeFileInput.files[0];
+    if (!resumeFile) return;
+
+    postAnalysisError.hidden = true;
+    setButtonLoading(atsCheckBtn, atsCheckSpinner, true);
+
+    try {
+        const formData = new FormData();
+        formData.append("resume_file", resumeFile);
+
+        const response = await fetch("/check-ats", { method: "POST", body: formData });
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => null);
+            showPostAnalysisError((errorData && errorData.detail) || "Something went wrong, please try again.");
+            return;
+        }
+
+        const data = await response.json();
+        atsIssuesList.innerHTML = ulItemsHtml(data.issues, "No issues found.");
+        atsPassedList.innerHTML = ulItemsHtml(data.passed, "Nothing to show.");
+        atsCheckOutput.hidden = false;
+    } catch (error) {
+        console.error(error);
+        showPostAnalysisError("Something went wrong, please try again.");
+    } finally {
+        setButtonLoading(atsCheckBtn, atsCheckSpinner, false);
+    }
+}
+
+function ulItemsHtml(items, emptyText) {
+    if (!items || items.length === 0) {
+        return `<li class="chip-empty">${escapeHtml(emptyText)}</li>`;
+    }
+    return items.map(item => `<li>${escapeHtml(item)}</li>`).join("");
+}
+
+function showPostAnalysisError(message) {
+    postAnalysisError.textContent = message;
+    postAnalysisError.hidden = false;
+}
+
+function copyToClipboard(text, button) {
+    navigator.clipboard.writeText(text).then(() => {
+        const original = button.textContent;
+        button.textContent = "Copied!";
+        setTimeout(() => { button.textContent = original; }, 1500);
+    });
 }
 
 function setLoading(isLoading) {
@@ -577,7 +914,6 @@ function renderResult(data) {
     renderListOrText("resultSuggestions", data.suggestions);
     renderScore(data.score, data.matched_keywords, data.missing_keywords);
     resultSection.hidden = false;
-    companyRail.hidden = true;
 }
 
 function renderScore(score, matchedKeywords, missingKeywords) {
@@ -607,8 +943,17 @@ function keywordChipsHtml(keywords, chipClass) {
     if (!keywords || keywords.length === 0) {
         return `<span class="chip-empty">None</span>`;
     }
+    // Missing keywords carry a placement tip: {keyword, tip}. Matched
+    // keywords (and older history rows saved before tips existed) are
+    // plain strings — handle both.
     return keywords
-        .map(kw => `<span class="chip ${chipClass}">${escapeHtml(kw)}</span>`)
+        .map(kw => {
+            const isTipped = kw && typeof kw === "object";
+            const text = isTipped ? kw.keyword : kw;
+            const tip = isTipped ? kw.tip : "";
+            const titleAttr = tip ? ` title="${escapeHtml(tip)}"` : "";
+            return `<span class="chip ${chipClass}"${titleAttr}>${escapeHtml(text)}</span>`;
+        })
         .join("");
 }
 
@@ -635,6 +980,11 @@ function escapeHtml(text) {
 
 const historyList = document.getElementById("historyList");
 const historyEmpty = document.getElementById("historyEmpty");
+const trendsCard = document.getElementById("trendsCard");
+const trendAverageScore = document.getElementById("trendAverageScore");
+const trendSparkline = document.getElementById("trendSparkline");
+const trendMissingWrap = document.getElementById("trendMissingWrap");
+const trendMissingList = document.getElementById("trendMissingList");
 
 async function loadHistory() {
     if (!isLoggedIn) return;
@@ -650,6 +1000,92 @@ async function loadHistory() {
     } catch (error) {
         console.error(error);
     }
+
+    try {
+        const trendsResponse = await fetch("/api/history/trends");
+        if (!trendsResponse.ok) return;
+        const trends = await trendsResponse.json();
+        renderTrends(trends);
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+function renderTrends(trends) {
+    if (!trends || trends.average_score === null || trends.average_score === undefined) {
+        trendsCard.hidden = true;
+        return;
+    }
+
+    trendsCard.hidden = false;
+    trendAverageScore.textContent = `${trends.average_score}%`;
+    renderSparkline(trends.score_trend || []);
+
+    const topMissing = trends.top_missing_keywords || [];
+    if (topMissing.length === 0) {
+        trendMissingWrap.hidden = true;
+    } else {
+        trendMissingWrap.hidden = false;
+        const maxCount = Math.max(...topMissing.map(entry => entry.count));
+        trendMissingList.innerHTML = topMissing
+            .map(entry => `
+                <div class="trend-missing-row">
+                    <span class="trend-missing-label">${escapeHtml(entry.keyword)}</span>
+                    <div class="trend-missing-bar-track">
+                        <div class="trend-missing-bar" style="width:${(entry.count / maxCount) * 100}%"></div>
+                    </div>
+                    <span class="trend-missing-count">${entry.count}</span>
+                </div>
+            `)
+            .join("");
+    }
+}
+
+function renderSparkline(points) {
+    const svgNs = "http://www.w3.org/2000/svg";
+    trendSparkline.innerHTML = "";
+
+    if (points.length === 0) return;
+
+    const width = 320;
+    const height = 64;
+    const padding = 6;
+    const scores = points.map(point => point.score);
+    const minScore = Math.min(...scores, 0);
+    const maxScore = Math.max(...scores, 100);
+    const range = maxScore - minScore || 1;
+
+    const xFor = index => points.length === 1
+        ? width / 2
+        : padding + (index / (points.length - 1)) * (width - padding * 2);
+    const yFor = score => height - padding - ((score - minScore) / range) * (height - padding * 2);
+
+    const coords = points.map((point, index) => [xFor(index), yFor(point.score)]);
+
+    const path = document.createElementNS(svgNs, "polyline");
+    path.setAttribute("points", coords.map(([x, y]) => `${x},${y}`).join(" "));
+    path.setAttribute("fill", "none");
+    path.setAttribute("stroke", "var(--accent)");
+    path.setAttribute("stroke-width", "2");
+    path.setAttribute("stroke-linecap", "round");
+    path.setAttribute("stroke-linejoin", "round");
+    trendSparkline.appendChild(path);
+
+    points.forEach((point, index) => {
+        const [x, y] = coords[index];
+        const circle = document.createElementNS(svgNs, "circle");
+        circle.setAttribute("cx", x);
+        circle.setAttribute("cy", y);
+        circle.setAttribute("r", "3");
+        circle.setAttribute("fill", "var(--accent)");
+
+        const title = document.createElementNS(svgNs, "title");
+        const date = new Date(point.date).toLocaleDateString(undefined, { dateStyle: "medium" });
+        title.textContent = `${date}: ${point.score}%`;
+        circle.appendChild(title);
+
+        trendSparkline.appendChild(circle);
+    });
 }
 
 function renderHistory(items) {

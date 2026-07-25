@@ -430,7 +430,7 @@ body {
   margin-bottom: 20px;
 }
 
-.login-form {
+.login-form:not([hidden]) {
   display: flex;
   flex-direction: column;
 }
@@ -733,11 +733,11 @@ button#analyzeBtn:disabled {
   margin: 0;
 }
 
-/* Full-width horizontal logo strip below the analyzer card, scrolling
-   left-to-right. Hidden once an analysis result is showing (toggled in
-   script.js alongside #result), via the plain [hidden] attribute — not
-   CSS :has(), since that isn't supported in every browser and silently
-   no-ops the whole rule when it isn't. */
+/* Full-width horizontal logo strip below the analyzer card. Hidden once
+   an analysis result is showing (toggled in script.js alongside #result /
+   #batchResults), via the plain [hidden] attribute — not CSS :has(),
+   since that isn't supported in every browser and silently no-ops the
+   whole rule when it isn't. */
 .company-rail {
   width: 100%;
   max-width: 900px;
@@ -871,7 +871,7 @@ button#analyzeBtn:disabled {
 }
 
 .chip-matched { background: var(--success-soft); color: var(--success); }
-.chip-missing { background: var(--danger-soft); color: var(--danger); }
+.chip-missing { background: var(--danger-soft); color: var(--danger); cursor: help; }
 
 .chip-empty {
   font-size: 12px;
@@ -1020,12 +1020,401 @@ button#analyzeBtn:disabled {
   transform: rotate(180deg);
 }
 
-.history-item-body {
+/* :not([hidden]) — pre-existing bug: an unconditional `display: grid`
+   here overrode the hidden attribute (author display beats the
+   browser's default [hidden]{display:none} regardless of specificity),
+   so history items never actually collapsed after expanding. */
+.history-item-body:not([hidden]) {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
   padding: 0 16px 16px;
   background: var(--card-bg);
+}
+
+/* Batch mode */
+
+.jd-col-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.jd-col-header label {
+  margin-bottom: 0;
+}
+
+.mode-toggle-link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.mode-toggle-link:hover {
+  text-decoration: underline;
+}
+
+.batch-jd-section {
+  margin-top: 12px;
+}
+
+.batch-jd-section .mode-toggle-link {
+  display: inline-block;
+  margin-bottom: 12px;
+}
+
+.batch-jd-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.batch-jd-item {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.batch-jd-textarea {
+  flex: 1;
+  padding: 12px 14px;
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  line-height: 1.5;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: #fbfbfe;
+  color: var(--text-primary);
+  resize: vertical;
+}
+
+.batch-jd-textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+  background: white;
+}
+
+.btn-remove-jd {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  margin-top: 4px;
+  border: 1.5px solid var(--border);
+  border-radius: 50%;
+  background: white;
+  color: var(--text-secondary);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.btn-remove-jd:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: var(--danger-soft);
+}
+
+#addJdBtn {
+  margin-top: 12px;
+}
+
+.batch-jd-hint {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.batch-results {
+  margin-top: 32px;
+}
+
+.batch-results h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.batch-results-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.batch-result-item {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.batch-result-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  background: var(--card-bg);
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+}
+
+.batch-result-rank {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  width: 24px;
+}
+
+.batch-result-jd-preview {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.batch-result-body:not([hidden]) {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  padding: 0 16px 16px;
+  background: var(--card-bg);
+}
+
+/* Post-analysis actions: tailored resume, cover letter, ATS check */
+
+/* :not([hidden]) — an unconditional `display` here would override the
+   hidden attribute regardless of specificity (author beats user-agent
+   in the cascade), so the actions row would never actually hide. */
+.post-analysis-actions:not([hidden]) {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.btn-action {
+  padding: 10px 18px;
+  border: 1.5px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 9px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s;
+}
+
+.btn-action:hover:not(:disabled) {
+  background: var(--accent);
+  color: white;
+}
+
+.btn-action:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.output-panel {
+  margin-top: 20px;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: #fbfbfe;
+}
+
+.output-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.output-panel-header h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.btn-copy {
+  padding: 6px 12px;
+  border: 1.5px solid var(--border);
+  background: white;
+  color: var(--text-primary);
+  font-family: "Inter", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.btn-copy:hover {
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
+.output-panel pre {
+  margin: 0;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  max-height: 480px;
+  overflow-y: auto;
+}
+
+.ats-section h4 {
+  margin: 16px 0 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.ats-section:first-of-type h4 {
+  margin-top: 0;
+}
+
+.ats-section ul {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.ats-section li {
+  margin-bottom: 4px;
+}
+
+/* Trends (History page) */
+
+.trends-card {
+  margin-bottom: 20px;
+}
+
+.trends-card h3 {
+  margin: 0 0 16px;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.trends-top {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+}
+
+.trend-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.trend-stat-value {
+  font-size: 28px;
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.trend-stat-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.trend-sparkline-wrap {
+  flex: 1;
+  min-width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.trend-sparkline {
+  width: 100%;
+  height: 64px;
+}
+
+.trend-missing-wrap:not([hidden]) {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.trend-missing-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.trend-missing-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.trend-missing-label {
+  flex-shrink: 0;
+  width: 120px;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trend-missing-bar-track {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.trend-missing-bar {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 999px;
+}
+
+.trend-missing-count {
+  flex-shrink: 0;
+  width: 20px;
+  text-align: right;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-secondary);
 }
 
 /* Mobile */
@@ -1069,7 +1458,8 @@ button#analyzeBtn:disabled {
   }
 
   .result,
-  .history-item-body {
+  .history-item-body,
+  .batch-result-body {
     grid-template-columns: 1fr;
   }
 
