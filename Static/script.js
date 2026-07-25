@@ -1,5 +1,32 @@
 const MAX_CHARS = 15000;
 
+// Render's free tier sleeps after ~15min idle; the first request after that
+// can take 30+ seconds to wake up, and a Cloudflare gateway timeout during
+// that window returns an HTML error page instead of JSON. This retries once
+// after a short wait so a cold start doesn't look like a login/signup failure.
+async function postJSONWithRetry(url, body, statusEl) {
+    for (let attempt = 0; attempt < 2; attempt++) {
+        try {
+            const response = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            const data = await response.json();
+            return { response, data };
+        } catch (error) {
+            if (attempt === 1) {
+                throw error;
+            }
+            if (statusEl) {
+                statusEl.textContent = "Server is waking up, retrying…";
+                statusEl.hidden = false;
+            }
+            await new Promise(resolve => setTimeout(resolve, 4000));
+        }
+    }
+}
+
 // Sidebar navigation — swaps which <section> is visible, no page reload.
 const SECTION_INFO = {
     home: {
@@ -344,17 +371,11 @@ async function handleSignup() {
     setButtonLoading(signupSubmitBtn, signupSpinner, true);
 
     try {
-        const response = await fetch("/signup", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                name: signupName.value,
-                username: signupUsername.value,
-                password: signupPassword.value,
-            }),
-        });
-
-        const data = await response.json();
+        const { response, data } = await postJSONWithRetry("/signup", {
+            name: signupName.value,
+            username: signupUsername.value,
+            password: signupPassword.value,
+        }, signupError);
 
         if (!response.ok) {
             signupError.textContent = data.detail || "Signup failed.";
@@ -382,14 +403,10 @@ async function handleLogin() {
     setButtonLoading(loginSubmitBtn, loginSpinner, true);
 
     try {
-        const response = await fetch("/login", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-                username: loginUsername.value,
-                password: loginPassword.value,
-            }),
-        });
+        const { response } = await postJSONWithRetry("/login", {
+            username: loginUsername.value,
+            password: loginPassword.value,
+        }, loginError);
 
         if (!response.ok) {
             loginError.textContent = "Invalid username or password.";
