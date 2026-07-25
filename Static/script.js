@@ -480,6 +480,7 @@ const copyCoverLetterBtn = document.getElementById("copyCoverLetterBtn");
 const atsCheckBtn = document.getElementById("atsCheckBtn");
 const atsCheckSpinner = document.getElementById("atsCheckSpinner");
 const atsCheckOutput = document.getElementById("atsCheckOutput");
+const atsCheckBody = document.getElementById("atsCheckBody");
 const atsIssuesList = document.getElementById("atsIssuesList");
 const atsPassedList = document.getElementById("atsPassedList");
 
@@ -786,6 +787,28 @@ function downloadBlob(blob, filename) {
     URL.revokeObjectURL(url);
 }
 
+// Wires a "^" button to collapse/expand the content beside it, and
+// returns a function to force it back open (used when fresh content
+// is generated after the user had previously collapsed it).
+function setupCollapseToggle(buttonId, contentEl) {
+    const button = document.getElementById(buttonId);
+    button.addEventListener("click", () => {
+        const collapsing = !contentEl.hidden;
+        contentEl.hidden = collapsing;
+        button.classList.toggle("is-collapsed", collapsing);
+        button.setAttribute("aria-expanded", String(!collapsing));
+    });
+    return () => {
+        contentEl.hidden = false;
+        button.classList.remove("is-collapsed");
+        button.setAttribute("aria-expanded", "true");
+    };
+}
+
+const expandTailorResumePreview = setupCollapseToggle("collapseTailorResumeBtn", tailorResumePreview);
+const expandCoverLetterText = setupCollapseToggle("collapseCoverLetterBtn", coverLetterText);
+const expandAtsCheckBody = setupCollapseToggle("collapseAtsCheckBtn", atsCheckBody);
+
 function hideOutputPanels() {
     tailorResumeOutput.hidden = true;
     coverLetterOutput.hidden = true;
@@ -828,13 +851,13 @@ function formatTailoredResumeHtml(text) {
 // Cycles the button's label through progress phrases while a slow AI call
 // is in flight, instead of leaving it stuck on the original button text.
 function startStatusCycle(labelEl, phrases) {
+    const originalText = labelEl.textContent;
     let i = 0;
     labelEl.textContent = phrases[0];
     const interval = setInterval(() => {
         i = (i + 1) % phrases.length;
         labelEl.textContent = phrases[i];
-    }, 2500);
-    const originalText = labelEl.textContent;
+    }, 1400);
     return (restoreText) => {
         clearInterval(interval);
         labelEl.textContent = restoreText !== undefined ? restoreText : originalText;
@@ -869,6 +892,7 @@ async function handleTailorResume() {
         currentTailoredResumeText = data.tailored_resume;
         tailorResumePreview.innerHTML = formatTailoredResumeHtml(currentTailoredResumeText);
         tailorResumeOutput.hidden = false;
+        expandTailorResumePreview();
     } catch (error) {
         console.error(error);
         showPostAnalysisError("Something went wrong, please try again.");
@@ -928,6 +952,7 @@ async function handleCoverLetter() {
         const data = await response.json();
         coverLetterText.textContent = data.cover_letter;
         coverLetterOutput.hidden = false;
+        expandCoverLetterText();
     } catch (error) {
         console.error(error);
         showPostAnalysisError("Something went wrong, please try again.");
@@ -958,6 +983,7 @@ async function handleAtsCheck() {
         atsIssuesList.innerHTML = ulItemsHtml(data.issues, "No issues found.");
         atsPassedList.innerHTML = ulItemsHtml(data.passed, "Nothing to show.");
         atsCheckOutput.hidden = false;
+        expandAtsCheckBody();
     } catch (error) {
         console.error(error);
         showPostAnalysisError("Something went wrong, please try again.");

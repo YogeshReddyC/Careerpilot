@@ -1250,6 +1250,38 @@ button#analyzeBtn:disabled {
   margin-bottom: 12px;
 }
 
+.output-panel-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-collapse {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1.5px solid var(--border);
+  background: white;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1;
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.btn-collapse:hover {
+  border-color: var(--accent);
+  color: var(--accent-dark);
+}
+
+.btn-collapse.is-collapsed {
+  transform: rotate(180deg);
+}
+
 .output-panel-header h3 {
   margin: 0;
   font-size: 14px;

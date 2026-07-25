@@ -220,10 +220,13 @@
                     <div class="output-panel" id="tailorResumeOutput" hidden>
                         <div class="output-panel-header">
                             <h3>Tailored Resume</h3>
-                            <button type="button" class="btn-copy" id="downloadTailorResumeBtn">
-                                Download PDF
-                                <span class="spinner" id="downloadTailorResumeSpinner" hidden></span>
-                            </button>
+                            <div class="output-panel-actions">
+                                <button type="button" class="btn-copy" id="downloadTailorResumeBtn">
+                                    Download PDF
+                                    <span class="spinner" id="downloadTailorResumeSpinner" hidden></span>
+                                </button>
+                                <button type="button" class="btn-collapse" id="collapseTailorResumeBtn" aria-label="Collapse tailored resume" aria-expanded="true">^</button>
+                            </div>
                         </div>
                         <div id="tailorResumePreview" class="tailored-resume-preview"></div>
                     </div>
@@ -231,20 +234,30 @@
                     <div class="output-panel" id="coverLetterOutput" hidden>
                         <div class="output-panel-header">
                             <h3>Cover Letter</h3>
-                            <button type="button" class="btn-copy" id="copyCoverLetterBtn">Copy</button>
+                            <div class="output-panel-actions">
+                                <button type="button" class="btn-copy" id="copyCoverLetterBtn">Copy</button>
+                                <button type="button" class="btn-collapse" id="collapseCoverLetterBtn" aria-label="Collapse cover letter" aria-expanded="true">^</button>
+                            </div>
                         </div>
                         <pre id="coverLetterText"></pre>
                     </div>
 
                     <div class="output-panel" id="atsCheckOutput" hidden>
-                        <h3>ATS Formatting Check</h3>
-                        <div class="ats-section">
-                            <h4>Issues</h4>
-                            <ul id="atsIssuesList"></ul>
+                        <div class="output-panel-header">
+                            <h3>ATS Formatting Check</h3>
+                            <div class="output-panel-actions">
+                                <button type="button" class="btn-collapse" id="collapseAtsCheckBtn" aria-label="Collapse ATS formatting check" aria-expanded="true">^</button>
+                            </div>
                         </div>
-                        <div class="ats-section">
-                            <h4>Looks Good</h4>
-                            <ul id="atsPassedList"></ul>
+                        <div id="atsCheckBody">
+                            <div class="ats-section">
+                                <h4>Issues</h4>
+                                <ul id="atsIssuesList"></ul>
+                            </div>
+                            <div class="ats-section">
+                                <h4>Looks Good</h4>
+                                <ul id="atsPassedList"></ul>
+                            </div>
                         </div>
                     </div>
 
