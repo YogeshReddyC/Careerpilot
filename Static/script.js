@@ -468,8 +468,6 @@ const postAnalysisError = document.getElementById("postAnalysisError");
 const tailorResumeBtn = document.getElementById("tailorResumeBtn");
 const tailorResumeSpinner = document.getElementById("tailorResumeSpinner");
 const tailorResumeOutput = document.getElementById("tailorResumeOutput");
-const tailorResumeText = document.getElementById("tailorResumeText");
-const copyTailorResumeBtn = document.getElementById("copyTailorResumeBtn");
 const coverLetterBtn = document.getElementById("coverLetterBtn");
 const coverLetterSpinner = document.getElementById("coverLetterSpinner");
 const coverLetterOutput = document.getElementById("coverLetterOutput");
@@ -770,8 +768,18 @@ function batchResultItemHtml(item, index) {
 tailorResumeBtn.addEventListener("click", handleTailorResume);
 coverLetterBtn.addEventListener("click", handleCoverLetter);
 atsCheckBtn.addEventListener("click", handleAtsCheck);
-copyTailorResumeBtn.addEventListener("click", () => copyToClipboard(tailorResumeText.textContent, copyTailorResumeBtn));
 copyCoverLetterBtn.addEventListener("click", () => copyToClipboard(coverLetterText.textContent, copyCoverLetterBtn));
+
+function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+}
 
 function hideOutputPanels() {
     tailorResumeOutput.hidden = true;
@@ -800,8 +808,8 @@ async function handleTailorResume() {
             return;
         }
 
-        const data = await response.json();
-        tailorResumeText.textContent = data.tailored_resume;
+        const blob = await response.blob();
+        downloadBlob(blob, "tailored_resume.docx");
         tailorResumeOutput.hidden = false;
     } catch (error) {
         console.error(error);
