@@ -221,6 +221,10 @@
                         <div class="output-panel-header">
                             <h3>Tailored Resume</h3>
                             <div class="output-panel-actions">
+                                <button type="button" class="btn-copy" id="browseTemplatesBtn">
+                                    Use a Template
+                                    <span class="spinner" id="browseTemplatesSpinner" hidden></span>
+                                </button>
                                 <button type="button" class="btn-copy" id="downloadTailorResumeBtn">
                                     Download PDF
                                     <span class="spinner" id="downloadTailorResumeSpinner" hidden></span>
@@ -230,6 +234,17 @@
                             </div>
                         </div>
                         <div id="tailorResumePreview" class="tailored-resume-preview"></div>
+                    </div>
+
+                    <div class="modal-overlay" id="templateGalleryModal" hidden>
+                        <div class="modal-box">
+                            <div class="modal-header">
+                                <h3>Choose a resume template</h3>
+                                <button type="button" class="btn-delete" id="closeTemplateGalleryBtn" aria-label="Close template gallery">&times;</button>
+                            </div>
+                            <p class="error-message" id="templateGalleryError" hidden></p>
+                            <div class="template-gallery-grid" id="templateGalleryGrid"></div>
+                        </div>
                     </div>
 
                     <div class="output-panel" id="coverLetterOutput" hidden>

@@ -10,3 +10,4 @@ python-docx
 psycopg2-binary
 sendgrid
 fpdf2
+jinja2

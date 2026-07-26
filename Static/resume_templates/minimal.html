@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ resume.name }} — Resume</title>
+<style>
+  @page { size: A4; margin: 18mm 20mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    color: #1a1a1a;
+    line-height: 1.6;
+    padding: 30px 42px;
+  }
+  header { border-bottom: 1px solid #1a1a1a; padding-bottom: 14px; margin-bottom: 18px; }
+  h1 { margin: 0 0 8px; font-size: 24px; font-weight: 700; letter-spacing: 0.3px; }
+  .contact-line { font-size: 12px; color: #555; }
+  .summary { margin: 0 0 20px; font-size: 13.5px; color: #333; }
+  h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: 2px;
+    color: #1a1a1a; margin: 22px 0 10px; padding-bottom: 4px;
+    border-bottom: 1px solid #ccc;
+  }
+  .entry { margin-bottom: 13px; }
+  .entry-heading-row { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 2px 12px; }
+  .entry-heading { font-weight: 700; font-size: 13.5px; }
+  .entry-subheading { font-size: 12px; color: #666; }
+  ul { margin: 5px 0 0; padding-left: 18px; }
+  li { font-size: 13px; margin-bottom: 2px; color: #333; }
+  li::marker { color: #999; }
+  .skills-plain { font-size: 13px; color: #333; }
+  .download-btn {
+    position: fixed; top: 16px; right: 16px;
+    background: #1a1a1a; color: #fff; border: none;
+    padding: 10px 18px; border-radius: 4px; font-size: 14px; cursor: pointer;
+  }
+  @media print { .no-print { display: none !important; } body { padding: 0; } .entry, .summary { break-inside: avoid; } }
+</style>
+</head>
+<body>
+  <button class="download-btn no-print" onclick="window.print()">Download PDF</button>
+
+  <header>
+    <h1>{{ resume.name }}</h1>
+    <div class="contact-line">{{ resume.contact_line }}</div>
+  </header>
+
+  {% if resume.summary %}
+  <div class="summary">{{ resume.summary }}</div>
+  {% endif %}
+
+  {% for section in resume.sections %}
+  <section>
+    <h2>{{ section.heading }}</h2>
+    {% if section.heading.lower() == "skills" %}
+    <div class="skills-plain">
+      {% for entry in section.entries %}
+      <div>{{ entry.bullets|join(" · ") }}</div>
+      {% endfor %}
+    </div>
+    {% else %}
+    {% for entry in section.entries %}
+    <div class="entry">
+      {% if entry.heading or entry.subheading %}
+      <div class="entry-heading-row">
+        {% if entry.heading %}<span class="entry-heading">{{ entry.heading }}</span>{% endif %}
+        {% if entry.subheading %}<span class="entry-subheading">{{ entry.subheading }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if entry.bullets %}
+      <ul>
+        {% for bullet in entry.bullets %}
+        <li>{{ bullet }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+  </section>
+  {% endfor %}
+</body>
+</html>

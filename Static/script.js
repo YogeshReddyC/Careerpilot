@@ -472,6 +472,13 @@ const tailorResumePreview = document.getElementById("tailorResumePreview");
 const downloadTailorResumeBtn = document.getElementById("downloadTailorResumeBtn");
 const downloadTailorResumeSpinner = document.getElementById("downloadTailorResumeSpinner");
 let currentTailoredResumeText = "";
+const browseTemplatesBtn = document.getElementById("browseTemplatesBtn");
+const browseTemplatesSpinner = document.getElementById("browseTemplatesSpinner");
+const templateGalleryModal = document.getElementById("templateGalleryModal");
+const templateGalleryGrid = document.getElementById("templateGalleryGrid");
+const templateGalleryError = document.getElementById("templateGalleryError");
+const closeTemplateGalleryBtn = document.getElementById("closeTemplateGalleryBtn");
+let currentStructuredResume = null;
 const coverLetterBtn = document.getElementById("coverLetterBtn");
 const coverLetterSpinner = document.getElementById("coverLetterSpinner");
 const coverLetterOutput = document.getElementById("coverLetterOutput");
@@ -772,6 +779,11 @@ function batchResultItemHtml(item, index) {
 
 tailorResumeBtn.addEventListener("click", handleTailorResume);
 downloadTailorResumeBtn.addEventListener("click", handleDownloadTailoredResumePdf);
+browseTemplatesBtn.addEventListener("click", handleBrowseTemplates);
+closeTemplateGalleryBtn.addEventListener("click", () => { templateGalleryModal.hidden = true; });
+templateGalleryModal.addEventListener("click", event => {
+    if (event.target === templateGalleryModal) templateGalleryModal.hidden = true;
+});
 coverLetterBtn.addEventListener("click", handleCoverLetter);
 atsCheckBtn.addEventListener("click", handleAtsCheck);
 copyCoverLetterBtn.addEventListener("click", () => copyToClipboard(coverLetterText.textContent, copyCoverLetterBtn));
@@ -821,6 +833,7 @@ function setupDeleteButton(buttonId, panelEl, onDelete) {
 
 setupDeleteButton("deleteTailorResumeBtn", tailorResumeOutput, () => {
     currentTailoredResumeText = "";
+    currentStructuredResume = null;
     tailorResumePreview.innerHTML = "";
 });
 setupDeleteButton("deleteCoverLetterBtn", coverLetterOutput, () => {
@@ -836,12 +849,26 @@ function hideOutputPanels() {
     coverLetterOutput.hidden = true;
     atsCheckOutput.hidden = true;
     postAnalysisError.hidden = true;
+    templateGalleryModal.hidden = true;
+    currentStructuredResume = null;
 }
 
 function escapeHtml(text) {
     const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
+}
+
+// Unlike escapeHtml (fine for text nodes), embedding a full rendered
+// template into a srcdoc="..." attribute needs quotes escaped too — a
+// template's own double-quoted HTML attributes would otherwise prematurely
+// close the srcdoc value and corrupt the markup.
+function escapeForAttribute(text) {
+    return text
+        .replace(/&/g, "&amp;")
+        .replace(/"/g, "&quot;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;");
 }
 
 // Turns the plain "ALL CAPS headers / '- ' bullets" text Gemini returns
@@ -949,6 +976,119 @@ async function handleDownloadTailoredResumePdf() {
     } finally {
         setButtonLoading(downloadTailorResumeBtn, downloadTailorResumeSpinner, false);
     }
+}
+
+// Fetches the tailored resume as structured data (name/contact/summary/
+// sections) rather than plain text, so it can be dropped into any of the
+// downloadable template designs. Separate Gemini call from the plain-text
+// "Tailor My Resume" flow above — this only runs when the user actually
+// opens the template gallery.
+async function handleBrowseTemplates() {
+    const resumeFile = resumeFileInput.files[0];
+    const jobDescription = jdInput.value.trim();
+    if (!resumeFile || !jobDescription) return;
+
+    postAnalysisError.hidden = true;
+    setButtonLoading(browseTemplatesBtn, browseTemplatesSpinner, true);
+
+    try {
+        const formData = new FormData();
+        formData.append("resume_file", resumeFile);
+        formData.append("job_description", jobDescription);
+
+        const [structuredResponse, templatesResponse] = await Promise.all([
+            fetch("/tailor-resume/structured", { method: "POST", body: formData }),
+            fetch("/resume-templates"),
+        ]);
+
+        if (!structuredResponse.ok) {
+            const errorData = await structuredResponse.json().catch(() => null);
+            showPostAnalysisError((errorData && errorData.detail) || "Something went wrong, please try again.");
+            return;
+        }
+        if (!templatesResponse.ok) {
+            showPostAnalysisError("Couldn't load templates, please try again.");
+            return;
+        }
+
+        currentStructuredResume = await structuredResponse.json();
+        const templates = await templatesResponse.json();
+        await renderTemplateGallery(templates);
+        templateGalleryError.hidden = true;
+        templateGalleryModal.hidden = false;
+    } catch (error) {
+        console.error(error);
+        showPostAnalysisError("Something went wrong, please try again.");
+    } finally {
+        setButtonLoading(browseTemplatesBtn, browseTemplatesSpinner, false);
+    }
+}
+
+// Renders every template with the user's actual data as a live, scaled-down
+// preview (like a real page thumbnail) rather than a plain name/tag card, so
+// templates can be visually compared side by side before picking one.
+async function renderTemplateGallery(templates) {
+    templateGalleryGrid.innerHTML = "";
+
+    const renderedHtmlByTemplateId = {};
+    await Promise.all(
+        templates.map(async template => {
+            try {
+                const response = await fetch(`/resume-templates/${template.id}/render`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(currentStructuredResume),
+                });
+                renderedHtmlByTemplateId[template.id] = response.ok ? await response.text() : null;
+            } catch (error) {
+                console.error(error);
+                renderedHtmlByTemplateId[template.id] = null;
+            }
+        })
+    );
+
+    for (const template of templates) {
+        const html = renderedHtmlByTemplateId[template.id];
+
+        const card = document.createElement("div");
+        card.className = "template-card";
+        card.innerHTML = `
+            <div class="template-preview-frame">
+                ${html
+                    ? `<iframe class="template-preview-iframe" srcdoc="${escapeForAttribute(html)}" tabindex="-1" title="${escapeHtml(template.name)} preview"></iframe>`
+                    : `<div class="template-preview-error">Preview unavailable</div>`
+                }
+                <div class="template-preview-overlay">
+                    <button type="button" class="use-template-btn">Use Template</button>
+                </div>
+            </div>
+            <div class="template-card-footer">
+                <span class="template-card-name">${escapeHtml(template.name)}</span>
+                <div class="template-card-tags">
+                    ${template.tags.map(tag => `<span class="template-tag">${escapeHtml(tag)}</span>`).join("")}
+                </div>
+            </div>
+        `;
+        card.querySelector(".use-template-btn").addEventListener("click", () => handleSelectTemplate(template.id, html));
+        templateGalleryGrid.appendChild(card);
+    }
+}
+
+function handleSelectTemplate(templateId, html) {
+    if (!html) {
+        templateGalleryError.textContent = "Couldn't render that template, please try again.";
+        templateGalleryError.hidden = false;
+        return;
+    }
+    templateGalleryError.hidden = true;
+
+    const blob = new Blob([html], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    window.open(url, "_blank");
+    // Revoke on a delay rather than immediately — the new tab needs
+    // time to actually load the blob URL before it's freed.
+    setTimeout(() => URL.revokeObjectURL(url), 30000);
+    templateGalleryModal.hidden = true;
 }
 
 async function handleCoverLetter() {

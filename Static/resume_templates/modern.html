@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ resume.name }} — Resume</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    color: #262233;
+    line-height: 1.55;
+    background: #fff;
+  }
+  .page { padding: 0 46px 40px; }
+  header {
+    background: linear-gradient(135deg, #4a2d6e 0%, #7c4fc9 100%);
+    color: #fff;
+    padding: 38px 46px 26px;
+    margin-bottom: 24px;
+  }
+  h1 { margin: 0 0 12px; font-size: 30px; font-weight: 700; letter-spacing: 0.2px; }
+  .contact-row { display: flex; flex-wrap: wrap; gap: 10px 18px; }
+  .contact-chip {
+    font-size: 12px;
+    background: rgba(255,255,255,0.16);
+    padding: 5px 12px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .summary {
+    margin: 0 0 22px;
+    font-size: 13.5px;
+    color: #3a3550;
+    background: #f7f4fd;
+    border-left: 4px solid #7c4fc9;
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+  }
+  h2 {
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1.4px;
+    color: #4a2d6e;
+    margin: 26px 0 14px;
+    padding-bottom: 6px;
+    border-bottom: 2px solid #e4d9f7;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  h2::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 2px;
+    background: #7c4fc9;
+    flex-shrink: 0;
+    display: inline-block;
+  }
+  .entry {
+    position: relative;
+    padding-left: 16px;
+    margin-bottom: 16px;
+    border-left: 2px solid #e4d9f7;
+  }
+  .entry::before {
+    content: "";
+    position: absolute;
+    left: -5px;
+    top: 4px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #7c4fc9;
+  }
+  .entry-heading-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 4px 12px;
+  }
+  .entry-heading { font-weight: 700; font-size: 13.5px; color: #262233; }
+  .entry-subheading { font-size: 12px; color: #7c4fc9; font-weight: 600; }
+  ul { margin: 6px 0 0; padding-left: 18px; }
+  li { font-size: 13px; margin-bottom: 3px; color: #3a3550; }
+  li::marker { color: #7c4fc9; }
+  .skills-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .skill-tag {
+    font-size: 12px;
+    font-weight: 600;
+    background: #f0e9fb;
+    color: #4a2d6e;
+    padding: 6px 14px;
+    border-radius: 999px;
+  }
+  .download-btn {
+    position: fixed; top: 16px; right: 16px;
+    background: #fff; color: #4a2d6e; border: none;
+    padding: 10px 18px; border-radius: 6px; font-size: 14px; cursor: pointer;
+    font-weight: 700; box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+  }
+  @media print {
+    .no-print { display: none !important; }
+    header { padding-top: 20mm; }
+    .entry, .summary { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+  <button class="download-btn no-print" onclick="window.print()">Download PDF</button>
+
+  <header>
+    <h1>{{ resume.name }}</h1>
+    <div class="contact-row">
+      {% for item in resume.contact_line.split("|") %}
+      <span class="contact-chip">{{ item.strip() }}</span>
+      {% endfor %}
+    </div>
+  </header>
+
+  <div class="page">
+    {% if resume.summary %}
+    <div class="summary">{{ resume.summary }}</div>
+    {% endif %}
+
+    {% for section in resume.sections %}
+    <section>
+      <h2>{{ section.heading }}</h2>
+      {% if section.heading.lower() == "skills" %}
+      <div class="skills-row">
+        {% for entry in section.entries %}
+          {% for bullet in entry.bullets %}
+          <span class="skill-tag">{{ bullet }}</span>
+          {% endfor %}
+        {% endfor %}
+      </div>
+      {% else %}
+      {% for entry in section.entries %}
+      <div class="entry">
+        {% if entry.heading or entry.subheading %}
+        <div class="entry-heading-row">
+          {% if entry.heading %}<span class="entry-heading">{{ entry.heading }}</span>{% endif %}
+          {% if entry.subheading %}<span class="entry-subheading">{{ entry.subheading }}</span>{% endif %}
+        </div>
+        {% endif %}
+        {% if entry.bullets %}
+        <ul>
+          {% for bullet in entry.bullets %}
+          <li>{{ bullet }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+      {% endfor %}
+      {% endif %}
+    </section>
+    {% endfor %}
+  </div>
+</body>
+</html>

@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ resume.name }} — Resume</title>
+<style>
+  @page { size: A4; margin: 0; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    color: #402c1f;
+    line-height: 1.55;
+    background: #fffaf5;
+  }
+  .page { padding: 0 42px 34px; }
+  header {
+    background: linear-gradient(120deg, #ff7e5f 0%, #feb47b 100%);
+    color: #fff;
+    padding: 36px 42px 26px;
+    margin-bottom: 22px;
+  }
+  h1 { margin: 0 0 10px; font-size: 29px; font-weight: 700; }
+  .contact-row { display: flex; flex-wrap: wrap; gap: 8px 14px; }
+  .contact-chip {
+    font-size: 12px; background: rgba(255,255,255,0.25);
+    padding: 5px 12px; border-radius: 999px;
+  }
+  .summary {
+    margin: 0 0 20px; font-size: 13.5px; color: #4a3527;
+    background: #fff1e6; border-radius: 12px; padding: 14px 18px;
+  }
+  h2 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: 1.4px;
+    color: #d9662f; margin: 22px 0 12px;
+  }
+  .entry { margin-bottom: 14px; }
+  .entry-heading { display: inline-block; font-weight: 700; font-size: 13.5px; background: #ffe3ce; color: #b8541e; padding: 4px 12px; border-radius: 999px; margin-bottom: 4px; }
+  .entry-subheading { font-size: 12px; color: #8a6a52; display: block; margin-bottom: 4px; }
+  ul { margin: 4px 0 0; padding-left: 18px; }
+  li { font-size: 13px; margin-bottom: 3px; color: #402c1f; }
+  li::marker { color: #ff7e5f; }
+  .skills-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .skill-tag {
+    font-size: 12px; font-weight: 600; color: #b8541e;
+    padding: 6px 14px; border-radius: 999px; border: 1.3px solid #ff7e5f;
+  }
+  .download-btn {
+    position: fixed; top: 16px; right: 16px;
+    background: #fff; color: #b8541e; border: none;
+    padding: 10px 18px; border-radius: 6px; font-size: 14px; cursor: pointer;
+    font-weight: 700;
+  }
+  @media print {
+    .no-print { display: none !important; }
+    body { background: #fff; }
+    header { padding-top: 20mm; }
+    .entry, .summary { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+  <button class="download-btn no-print" onclick="window.print()">Download PDF</button>
+
+  <header>
+    <h1>{{ resume.name }}</h1>
+    <div class="contact-row">
+      {% for item in resume.contact_line.split("|") %}
+      <span class="contact-chip">{{ item.strip() }}</span>
+      {% endfor %}
+    </div>
+  </header>
+
+  <div class="page">
+    {% if resume.summary %}
+    <div class="summary">{{ resume.summary }}</div>
+    {% endif %}
+
+    {% for section in resume.sections %}
+    <section>
+      <h2>{{ section.heading }}</h2>
+      {% if section.heading.lower() == "skills" %}
+      <div class="skills-row">
+        {% for entry in section.entries %}
+          {% for bullet in entry.bullets %}
+          <span class="skill-tag">{{ bullet }}</span>
+          {% endfor %}
+        {% endfor %}
+      </div>
+      {% else %}
+      {% for entry in section.entries %}
+      <div class="entry">
+        {% if entry.heading %}<span class="entry-heading">{{ entry.heading }}</span>{% endif %}
+        {% if entry.subheading %}<span class="entry-subheading">{{ entry.subheading }}</span>{% endif %}
+        {% if entry.bullets %}
+        <ul>
+          {% for bullet in entry.bullets %}
+          <li>{{ bullet }}</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      </div>
+      {% endfor %}
+      {% endif %}
+    </section>
+    {% endfor %}
+  </div>
+</body>
+</html>

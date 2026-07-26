@@ -1379,6 +1379,141 @@ button#analyzeBtn:disabled {
   margin-top: 0;
 }
 
+/* Resume template gallery */
+
+.modal-box {
+  position: relative;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  padding: 28px;
+  max-width: 760px;
+  width: 100%;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.modal-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.template-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 14px;
+}
+
+.template-card {
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: white;
+  font-family: "Inter", sans-serif;
+  transition: border-color 0.15s, transform 0.15s;
+}
+
+.template-card:hover {
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+.template-preview-frame {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  overflow: hidden;
+  background: #f4f4fa;
+  border-bottom: 1px solid var(--border);
+}
+
+.template-preview-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 900px;
+  height: 1273px;
+  border: none;
+  pointer-events: none;
+  transform: scale(0.245);
+  transform-origin: top left;
+  background: white;
+}
+
+.template-preview-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.template-preview-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 21, 43, 0.45);
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.template-card:hover .template-preview-overlay {
+  opacity: 1;
+}
+
+.use-template-btn {
+  background: var(--accent);
+  color: white;
+  border: none;
+  padding: 9px 20px;
+  border-radius: 999px;
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.use-template-btn:hover {
+  background: var(--accent-dark);
+}
+
+.template-card-footer {
+  padding: 12px 14px;
+}
+
+.template-card-name {
+  font-weight: 700;
+  font-size: 14px;
+  margin-bottom: 6px;
+}
+
+.template-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.template-tag {
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft, #eef1ff);
+  color: var(--accent-dark);
+}
+
 .tailored-resume-preview p {
   margin: 0 0 8px;
 }

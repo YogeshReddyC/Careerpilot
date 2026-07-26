@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ resume.name }} — Resume</title>
+<style>
+  @page { size: A4; margin: 18mm 20mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: Georgia, "Times New Roman", serif;
+    color: #241414;
+    line-height: 1.55;
+    padding: 30px 44px;
+  }
+  header { text-align: center; margin-bottom: 16px; }
+  h1 { margin: 0 0 6px; font-size: 27px; color: #7a1f2b; letter-spacing: 0.5px; }
+  .rule { border: none; border-top: 2px solid #7a1f2b; border-bottom: 1px solid #7a1f2b; height: 3px; margin: 8px auto 12px; width: 70%; }
+  .contact-line { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 12px; color: #5a4040; }
+  .summary { margin: 16px 0; font-size: 13.5px; text-align: center; color: #333; padding: 0 24px; }
+  h2 {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 12px; text-transform: uppercase; letter-spacing: 2.2px;
+    color: #7a1f2b; text-align: center; margin: 22px 0 12px;
+  }
+  .entry { margin-bottom: 13px; }
+  .entry-heading-row { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 2px 12px; }
+  .entry-heading { font-weight: bold; font-size: 14px; }
+  .entry-subheading { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 11.5px; color: #7a1f2b; font-style: italic; }
+  ul { margin: 5px 0 0; padding-left: 20px; }
+  li { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 13px; margin-bottom: 3px; color: #333; }
+  li::marker { color: #7a1f2b; }
+  .skills-plain { font-family: "Helvetica Neue", Arial, sans-serif; font-size: 13px; text-align: center; color: #333; }
+  .download-btn {
+    position: fixed; top: 16px; right: 16px;
+    background: #7a1f2b; color: #fff; border: none;
+    padding: 10px 18px; border-radius: 6px; font-size: 14px; cursor: pointer;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+  }
+  @media print { .no-print { display: none !important; } body { padding: 0; } .entry, .summary { break-inside: avoid; } }
+</style>
+</head>
+<body>
+  <button class="download-btn no-print" onclick="window.print()">Download PDF</button>
+
+  <header>
+    <h1>{{ resume.name }}</h1>
+    <hr class="rule">
+    <div class="contact-line">{{ resume.contact_line }}</div>
+  </header>
+
+  {% if resume.summary %}
+  <div class="summary">{{ resume.summary }}</div>
+  {% endif %}
+
+  {% for section in resume.sections %}
+  <section>
+    <h2>{{ section.heading }}</h2>
+    {% if section.heading.lower() == "skills" %}
+    <div class="skills-plain">
+      {% for entry in section.entries %}
+      <div>{{ entry.bullets|join(" · ") }}</div>
+      {% endfor %}
+    </div>
+    {% else %}
+    {% for entry in section.entries %}
+    <div class="entry">
+      {% if entry.heading or entry.subheading %}
+      <div class="entry-heading-row">
+        {% if entry.heading %}<span class="entry-heading">{{ entry.heading }}</span>{% endif %}
+        {% if entry.subheading %}<span class="entry-subheading">{{ entry.subheading }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if entry.bullets %}
+      <ul>
+        {% for bullet in entry.bullets %}
+        <li>{{ bullet }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+  </section>
+  {% endfor %}
+</body>
+</html>

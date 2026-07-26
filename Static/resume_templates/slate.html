@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>{{ resume.name }} — Resume</title>
+<style>
+  @page { size: A4; margin: 14mm 18mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    color: #2f3640;
+    line-height: 1.4;
+    padding: 24px 36px;
+    font-size: 12.5px;
+  }
+  header { background: #2f3640; color: #fff; padding: 18px 22px; margin: -24px -36px 16px; }
+  h1 { margin: 0 0 6px; font-size: 22px; font-weight: 700; }
+  .contact-line { font-size: 11px; color: #e1b12c; }
+  .summary { margin: 0 0 14px; font-size: 12px; color: #444; }
+  h2 {
+    font-size: 11px; text-transform: uppercase; letter-spacing: 1.2px;
+    color: #e1b12c; background: #2f3640; padding: 4px 10px;
+    margin: 14px 0 8px; display: inline-block; border-radius: 3px;
+  }
+  .entry { margin-bottom: 8px; }
+  .entry-heading-row { display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 1px 10px; }
+  .entry-heading { font-weight: 700; font-size: 12.5px; }
+  .entry-subheading { font-size: 11px; color: #718093; font-weight: 600; }
+  ul { margin: 3px 0 0; padding-left: 16px; }
+  li { font-size: 12px; margin-bottom: 1px; color: #353b48; }
+  li::marker { color: #e1b12c; }
+  .skills-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .skill-tag {
+    font-size: 11px; font-weight: 600; background: #f1f2f6; color: #2f3640;
+    padding: 4px 10px; border-radius: 3px; border: 1px solid #dcdde1;
+  }
+  .download-btn {
+    position: fixed; top: 16px; right: 16px;
+    background: #e1b12c; color: #2f3640; border: none;
+    padding: 10px 18px; border-radius: 6px; font-size: 14px; cursor: pointer;
+    font-weight: 700;
+  }
+  @media print { .no-print { display: none !important; } header { margin-top: 0; } .entry, .summary { break-inside: avoid; } }
+</style>
+</head>
+<body>
+  <button class="download-btn no-print" onclick="window.print()">Download PDF</button>
+
+  <header>
+    <h1>{{ resume.name }}</h1>
+    <div class="contact-line">{{ resume.contact_line }}</div>
+  </header>
+
+  {% if resume.summary %}
+  <div class="summary">{{ resume.summary }}</div>
+  {% endif %}
+
+  {% for section in resume.sections %}
+  <section>
+    <h2>{{ section.heading }}</h2>
+    {% if section.heading.lower() == "skills" %}
+    <div class="skills-row">
+      {% for entry in section.entries %}
+        {% for bullet in entry.bullets %}
+        <span class="skill-tag">{{ bullet }}</span>
+        {% endfor %}
+      {% endfor %}
+    </div>
+    {% else %}
+    {% for entry in section.entries %}
+    <div class="entry">
+      {% if entry.heading or entry.subheading %}
+      <div class="entry-heading-row">
+        {% if entry.heading %}<span class="entry-heading">{{ entry.heading }}</span>{% endif %}
+        {% if entry.subheading %}<span class="entry-subheading">{{ entry.subheading }}</span>{% endif %}
+      </div>
+      {% endif %}
+      {% if entry.bullets %}
+      <ul>
+        {% for bullet in entry.bullets %}
+        <li>{{ bullet }}</li>
+        {% endfor %}
+      </ul>
+      {% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+  </section>
+  {% endfor %}
+</body>
+</html>
