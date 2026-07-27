@@ -399,7 +399,14 @@ def fit_label_from_score(score: int) -> str:
 
 JD_IMPORT_HEADERS = {"User-Agent": "Mozilla/5.0 (compatible; CareerPilotBot/1.0)"}
 JD_IMPORT_TIMEOUT_SECONDS = 10
-_SCRIPT_STYLE_RE = re.compile(r"<(script|style)[^>]*>.*?</\1>", re.DOTALL | re.IGNORECASE)
+# Many career pages (Cisco/Phenom included) embed the actual job posting as
+# schema.org JobPosting JSON-LD inside <script type="application/ld+json">,
+# for Google Jobs SEO — stripped along with real <script> tags below, this
+# regex would delete the one place the JD text actually lives on that page.
+_SCRIPT_STYLE_RE = re.compile(
+    r"<script(?![^>]*application/ld\+json)[^>]*>.*?</script>|<style[^>]*>.*?</style>",
+    re.DOTALL | re.IGNORECASE,
+)
 
 
 def _fetch_workday_jd(parsed_url) -> str | None:
@@ -409,9 +416,16 @@ def _fetch_workday_jd(parsed_url) -> str | None:
     if "job" not in parts:
         return None
     job_idx = parts.index("job")
-    if job_idx == 0 or job_idx + 1 >= len(parts):
+    if job_idx == 0:
         return None
-    site, posting = parts[job_idx - 1], parts[job_idx + 1]
+    # Workday sometimes inserts a cosmetic location segment between "job" and
+    # the real posting slug (e.g. .../job/IN---Bengaluru-India/Software-Engineer_REF123/apply),
+    # so the posting slug isn't always the segment right after "job" — it's
+    # always the last segment once trailing action words like "apply" are dropped.
+    posting_parts = [p for p in parts[job_idx + 1:] if p.lower() != "apply"]
+    if not posting_parts:
+        return None
+    site, posting = parts[job_idx - 1], posting_parts[-1]
     tenant = parsed_url.netloc.split(".")[0]
     api_url = f"https://{parsed_url.netloc}/wday/cxs/{tenant}/{site}/job/{posting}"
     response = requests.get(api_url, headers=JD_IMPORT_HEADERS, timeout=JD_IMPORT_TIMEOUT_SECONDS)
