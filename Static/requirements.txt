@@ -11,3 +11,4 @@ psycopg2-binary
 sendgrid
 fpdf2
 jinja2
+requests

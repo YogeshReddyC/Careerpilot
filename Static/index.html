@@ -103,6 +103,17 @@
                                 <label for="jd">Job Description</label>
                                 <button type="button" class="mode-toggle-link" id="batchModeToggle">Analyze against multiple jobs</button>
                             </div>
+                            <div class="jd-url-import">
+                                <input
+                                    type="url"
+                                    id="jdUrlInput"
+                                    placeholder="Or paste a job posting URL...">
+                                <button type="button" class="btn-copy" id="importJdBtn">
+                                    Import
+                                    <span class="spinner" id="importJdSpinner" hidden></span>
+                                </button>
+                            </div>
+                            <p class="error-message" id="importJdError" hidden></p>
                             <textarea
                                 id="jd"
                                 rows="12"

@@ -1071,6 +1071,35 @@ button#analyzeBtn:disabled {
   text-decoration: underline;
 }
 
+.jd-url-import {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.jd-url-import input {
+  flex: 1;
+  padding: 10px 12px;
+  font-family: "Inter", sans-serif;
+  font-size: 13px;
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  background: #fbfbfe;
+  color: var(--text-primary);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.jd-url-import input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 4px var(--accent-soft);
+  background: white;
+}
+
+.jd-url-import .btn-copy {
+  flex-shrink: 0;
+}
+
 .batch-jd-section {
   margin-top: 12px;
 }

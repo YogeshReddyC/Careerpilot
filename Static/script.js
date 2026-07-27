@@ -457,6 +457,10 @@ const fileDrop = document.getElementById("fileDrop");
 const fileDropText = document.getElementById("fileDropText");
 const jdInput = document.getElementById("jd");
 const jdCount = document.getElementById("jdCount");
+const jdUrlInput = document.getElementById("jdUrlInput");
+const importJdBtn = document.getElementById("importJdBtn");
+const importJdSpinner = document.getElementById("importJdSpinner");
+const importJdError = document.getElementById("importJdError");
 const analyzeBtn = document.getElementById("analyzeBtn");
 const spinner = document.getElementById("spinner");
 const errorMessage = document.getElementById("errorMessage");
@@ -510,6 +514,47 @@ function updateCharCount(input, counter) {
     const length = input.value.length;
     counter.textContent = `${length.toLocaleString()} / ${MAX_CHARS.toLocaleString()}`;
     counter.classList.toggle("over-limit", length > MAX_CHARS);
+}
+
+importJdBtn.addEventListener("click", handleImportJd);
+
+async function handleImportJd() {
+    const url = jdUrlInput.value.trim();
+    importJdError.hidden = true;
+
+    if (!url) {
+        importJdError.textContent = "Enter a job posting URL first.";
+        importJdError.hidden = false;
+        return;
+    }
+
+    setButtonLoading(importJdBtn, importJdSpinner, true);
+
+    try {
+        const response = await fetch("/api/import-jd", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ url }),
+        });
+
+        const data = await response.json().catch(() => null);
+
+        if (!response.ok) {
+            importJdError.textContent = (data && data.detail) || "Something went wrong, please try again.";
+            importJdError.hidden = false;
+            return;
+        }
+
+        jdInput.value = data.job_description;
+        updateCharCount(jdInput, jdCount);
+        jdUrlInput.value = "";
+    } catch (error) {
+        console.error(error);
+        importJdError.textContent = "Something went wrong, please try again.";
+        importJdError.hidden = false;
+    } finally {
+        setButtonLoading(importJdBtn, importJdSpinner, false);
+    }
 }
 
 resumeFileInput.addEventListener("change", () => {
