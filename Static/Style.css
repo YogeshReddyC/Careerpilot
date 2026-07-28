@@ -734,10 +734,10 @@ button#analyzeBtn:disabled {
 }
 
 /* Full-width horizontal logo strip below the analyzer card. Hidden once
-   an analysis result is showing (toggled in script.js alongside #result /
-   #batchResults), via the plain [hidden] attribute — not CSS :has(),
-   since that isn't supported in every browser and silently no-ops the
-   whole rule when it isn't. */
+   an analysis result is showing (toggled in script.js alongside #result),
+   via the plain [hidden] attribute — not CSS :has(), since that isn't
+   supported in every browser and silently no-ops the whole rule when
+   it isn't. */
 .company-rail {
   width: 100%;
   max-width: 900px;
@@ -794,11 +794,75 @@ button#analyzeBtn:disabled {
    regardless of specificity, so an unconditional `display: grid` here
    would make the results grid visible (with empty placeholder cards)
    even while #result still has the hidden attribute. */
+.result-layout {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.result-layout > .result {
+  flex: 1;
+  min-width: 0;
+}
+
 .result:not([hidden]) {
   margin-top: 32px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+}
+
+.score-breakdown {
+  flex: 0 0 220px;
+}
+
+.score-breakdown:not([hidden]) {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: var(--card-bg);
+}
+
+.score-breakdown h3 {
+  font-size: 15px;
+  margin: 0;
+}
+
+.score-breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.score-breakdown-item-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.score-breakdown-item-header .score-breakdown-pct {
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+
+.score-breakdown-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.score-breakdown-bar-fill {
+  height: 100%;
+  border-radius: 999px;
 }
 
 .result-card {
@@ -1041,8 +1105,6 @@ button#analyzeBtn:disabled {
   background: var(--card-bg);
 }
 
-/* Batch mode */
-
 .jd-col-header {
   display: flex;
   align-items: baseline;
@@ -1053,22 +1115,6 @@ button#analyzeBtn:disabled {
 
 .jd-col-header label {
   margin-bottom: 0;
-}
-
-.mode-toggle-link {
-  background: none;
-  border: none;
-  padding: 0;
-  color: var(--accent);
-  font-family: "Inter", sans-serif;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  text-decoration: none;
-}
-
-.mode-toggle-link:hover {
-  text-decoration: underline;
 }
 
 .jd-url-import {
@@ -1098,140 +1144,6 @@ button#analyzeBtn:disabled {
 
 .jd-url-import .btn-copy {
   flex-shrink: 0;
-}
-
-.batch-jd-section {
-  margin-top: 12px;
-}
-
-.batch-jd-section .mode-toggle-link {
-  display: inline-block;
-  margin-bottom: 12px;
-}
-
-.batch-jd-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.batch-jd-item {
-  display: flex;
-  gap: 8px;
-  align-items: flex-start;
-}
-
-.batch-jd-textarea {
-  flex: 1;
-  padding: 12px 14px;
-  font-family: "Inter", sans-serif;
-  font-size: 13px;
-  line-height: 1.5;
-  border: 1.5px solid var(--border);
-  border-radius: 10px;
-  background: #fbfbfe;
-  color: var(--text-primary);
-  resize: vertical;
-}
-
-.batch-jd-textarea:focus {
-  outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 4px var(--accent-soft);
-  background: white;
-}
-
-.btn-remove-jd {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  margin-top: 4px;
-  border: 1.5px solid var(--border);
-  border-radius: 50%;
-  background: white;
-  color: var(--text-secondary);
-  font-size: 16px;
-  line-height: 1;
-  cursor: pointer;
-}
-
-.btn-remove-jd:hover {
-  border-color: var(--danger);
-  color: var(--danger);
-  background: var(--danger-soft);
-}
-
-#addJdBtn {
-  margin-top: 12px;
-}
-
-.batch-jd-hint {
-  margin: 8px 0 0;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.batch-results {
-  margin-top: 32px;
-}
-
-.batch-results h3 {
-  margin: 0 0 12px;
-  font-size: 14px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.batch-results-list {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.batch-result-item {
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  overflow: hidden;
-}
-
-.batch-result-header {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  padding: 14px 16px;
-  background: var(--card-bg);
-  border: none;
-  cursor: pointer;
-  text-align: left;
-  font-family: inherit;
-}
-
-.batch-result-rank {
-  flex-shrink: 0;
-  font-size: 12px;
-  font-weight: 700;
-  color: var(--text-secondary);
-  width: 24px;
-}
-
-.batch-result-jd-preview {
-  flex: 1;
-  min-width: 0;
-  font-size: 13px;
-  color: var(--text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.batch-result-body:not([hidden]) {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  padding: 0 16px 16px;
-  background: var(--card-bg);
 }
 
 /* Post-analysis actions: tailored resume, cover letter, ATS check */
@@ -1586,14 +1498,6 @@ button#analyzeBtn:disabled {
   margin-bottom: 20px;
 }
 
-.trends-card h3 {
-  margin: 0 0 16px;
-  font-size: 14px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
 .trends-top {
   display: flex;
   align-items: center;
@@ -1621,7 +1525,7 @@ button#analyzeBtn:disabled {
   letter-spacing: 0.04em;
 }
 
-.trend-sparkline-wrap {
+.trend-chart-wrap {
   flex: 1;
   min-width: 200px;
   display: flex;
@@ -1629,9 +1533,10 @@ button#analyzeBtn:disabled {
   gap: 6px;
 }
 
-.trend-sparkline {
+.trend-chart-canvas-box {
+  position: relative;
   width: 100%;
-  height: 64px;
+  height: 90px;
 }
 
 .trend-missing-wrap:not([hidden]) {
@@ -1727,13 +1632,21 @@ button#analyzeBtn:disabled {
   }
 
   .result,
-  .history-item-body,
-  .batch-result-body {
+  .history-item-body {
     grid-template-columns: 1fr;
   }
 
   .result-fit,
   .result-suggestions {
     grid-column: auto;
+  }
+
+  .result-layout {
+    flex-direction: column;
+  }
+
+  .score-breakdown {
+    flex: 1 1 auto;
+    width: 100%;
   }
 }

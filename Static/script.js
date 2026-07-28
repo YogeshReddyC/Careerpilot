@@ -37,6 +37,10 @@ const SECTION_INFO = {
         title: "Your Previous Analyses",
         subtitle: "Come back anytime to revisit your past resume-fit results.",
     },
+    insights: {
+        title: "Your Insights",
+        subtitle: "Trends and patterns across everything you've analyzed.",
+    },
     about: {
         title: "About",
         subtitle: "What CareerPilot is and how it works.",
@@ -68,6 +72,9 @@ navItems.forEach(item => {
         }
         if (item.dataset.section === "history") {
             loadHistory();
+        }
+        if (item.dataset.section === "insights") {
+            loadInsights();
         }
         showSection(item.dataset.section);
     });
@@ -115,6 +122,7 @@ const loginSpinner = document.getElementById("loginSpinner");
 const loginError = document.getElementById("loginError");
 const loginNavBtn = document.getElementById("loginNavBtn");
 const historyNavBtn = document.getElementById("historyNavBtn");
+const insightsNavBtn = document.getElementById("insightsNavBtn");
 const getStartedBtn = document.getElementById("getStartedBtn");
 const heroCtaBtn = document.getElementById("heroCtaBtn");
 const switchToSignupLink = document.getElementById("switchToSignupLink");
@@ -162,6 +170,7 @@ function setAuthUI(loggedIn, jumpToAnalyzer = false) {
     loginNavBtn.textContent = loggedIn ? "Logout" : "Login";
     loginNavBtn.classList.toggle("is-logout", loggedIn);
     historyNavBtn.hidden = !loggedIn;
+    insightsNavBtn.hidden = !loggedIn;
     getStartedBtn.hidden = loggedIn;
     renderHomeView();
 }
@@ -465,6 +474,8 @@ const analyzeBtn = document.getElementById("analyzeBtn");
 const spinner = document.getElementById("spinner");
 const errorMessage = document.getElementById("errorMessage");
 const resultSection = document.getElementById("result");
+const scoreBreakdown = document.getElementById("scoreBreakdown");
+const scoreBreakdownList = document.getElementById("scoreBreakdownList");
 const companyRail = document.getElementById("companyRail");
 
 const postAnalysisActions = document.getElementById("postAnalysisActions");
@@ -494,16 +505,6 @@ const atsCheckOutput = document.getElementById("atsCheckOutput");
 const atsCheckBody = document.getElementById("atsCheckBody");
 const atsIssuesList = document.getElementById("atsIssuesList");
 const atsPassedList = document.getElementById("atsPassedList");
-
-const batchModeToggle = document.getElementById("batchModeToggle");
-const singleModeToggle = document.getElementById("singleModeToggle");
-const batchJdSection = document.getElementById("batchJdSection");
-const batchJdList = document.getElementById("batchJdList");
-const addJdBtn = document.getElementById("addJdBtn");
-const batchResults = document.getElementById("batchResults");
-const batchResultsList = document.getElementById("batchResultsList");
-const MAX_BATCH_JOBS = 10;
-let isBatchMode = false;
 
 const ALLOWED_RESUME_EXTENSIONS = [".pdf", ".docx"];
 
@@ -584,15 +585,7 @@ function hasAllowedExtension(filename) {
     return ALLOWED_RESUME_EXTENSIONS.some(ext => lower.endsWith(ext));
 }
 
-analyzeBtn.addEventListener("click", handleAnalyze);
-
-async function handleAnalyze() {
-    if (isBatchMode) {
-        await handleBatchAnalyze();
-    } else {
-        await handleSingleAnalyze();
-    }
-}
+analyzeBtn.addEventListener("click", handleSingleAnalyze);
 
 async function handleSingleAnalyze() {
     const resumeFile = resumeFileInput.files[0];
@@ -600,6 +593,7 @@ async function handleSingleAnalyze() {
 
     hideError();
     resultSection.hidden = true;
+    scoreBreakdown.hidden = true;
     postAnalysisActions.hidden = true;
     companyRail.hidden = false;
     hideOutputPanels();
@@ -648,175 +642,6 @@ async function handleSingleAnalyze() {
     } finally {
         setLoading(false);
     }
-}
-
-// --- Batch mode: same resume against multiple job descriptions ---
-
-batchModeToggle.addEventListener("click", () => setBatchMode(true));
-singleModeToggle.addEventListener("click", () => setBatchMode(false));
-
-function setBatchMode(enabled) {
-    isBatchMode = enabled;
-    jdInput.hidden = enabled;
-    jdCount.hidden = enabled;
-    batchModeToggle.hidden = enabled;
-    batchJdSection.hidden = !enabled;
-
-    hideError();
-    resultSection.hidden = true;
-    postAnalysisActions.hidden = true;
-    companyRail.hidden = false;
-    hideOutputPanels();
-    batchResults.hidden = true;
-}
-
-addJdBtn.addEventListener("click", () => {
-    const currentCount = batchJdList.querySelectorAll(".batch-jd-item").length;
-    if (currentCount >= MAX_BATCH_JOBS) return;
-
-    const item = document.createElement("div");
-    item.className = "batch-jd-item";
-    item.innerHTML = `
-        <textarea class="batch-jd-textarea" rows="6" placeholder="Paste job description #${currentCount + 1}..."></textarea>
-        <button type="button" class="btn-remove-jd" aria-label="Remove this job description">&times;</button>
-    `;
-    batchJdList.appendChild(item);
-    updateRemoveJdButtonsVisibility();
-});
-
-batchJdList.addEventListener("click", event => {
-    if (event.target.classList.contains("btn-remove-jd")) {
-        event.target.closest(".batch-jd-item").remove();
-        updateRemoveJdButtonsVisibility();
-    }
-});
-
-function updateRemoveJdButtonsVisibility() {
-    const items = batchJdList.querySelectorAll(".batch-jd-item");
-    items.forEach(item => {
-        item.querySelector(".btn-remove-jd").hidden = items.length <= 1;
-    });
-}
-
-async function handleBatchAnalyze() {
-    const resumeFile = resumeFileInput.files[0];
-    const jobDescriptions = Array.from(batchJdList.querySelectorAll(".batch-jd-textarea"))
-        .map(textarea => textarea.value.trim())
-        .filter(Boolean);
-
-    hideError();
-    batchResults.hidden = true;
-    companyRail.hidden = false;
-
-    if (!resumeFile) {
-        showError("Please upload your resume.");
-        return;
-    }
-    if (!hasAllowedExtension(resumeFile.name)) {
-        showError("Please upload a PDF or DOCX file.");
-        return;
-    }
-    if (jobDescriptions.length === 0) {
-        showError("Please paste at least one job description.");
-        return;
-    }
-    if (jobDescriptions.some(jd => jd.length > MAX_CHARS)) {
-        showError(`Each job description must be under ${MAX_CHARS.toLocaleString()} characters.`);
-        return;
-    }
-
-    setLoading(true);
-
-    try {
-        const formData = new FormData();
-        formData.append("resume_file", resumeFile);
-        formData.append("job_descriptions", JSON.stringify(jobDescriptions));
-
-        const response = await fetch("/analyze-batch", {
-            method: "POST",
-            body: formData,
-        });
-
-        if (!response.ok) {
-            const errorData = await response.json().catch(() => null);
-            showError((errorData && errorData.detail) || "Something went wrong, please try again.");
-            return;
-        }
-
-        const data = await response.json();
-        renderBatchResults(data.results);
-
-    } catch (error) {
-        console.error(error);
-        showError("Something went wrong, please try again.");
-    } finally {
-        setLoading(false);
-    }
-}
-
-function renderBatchResults(results) {
-    batchResultsList.innerHTML = results.map(batchResultItemHtml).join("");
-    batchResults.hidden = false;
-    companyRail.hidden = true;
-
-    batchResultsList.querySelectorAll(".batch-result-header").forEach(header => {
-        header.addEventListener("click", () => {
-            const body = header.nextElementSibling;
-            body.hidden = !body.hidden;
-            header.classList.toggle("expanded", !body.hidden);
-        });
-    });
-}
-
-function batchResultItemHtml(item, index) {
-    const fitClass = (item.fit || "").toLowerCase();
-    return `
-        <div class="batch-result-item">
-            <button type="button" class="batch-result-header">
-                <span class="batch-result-rank">#${index + 1}</span>
-                <span class="history-score-badge fit-${escapeHtml(fitClass)}">${item.score}%</span>
-                <span class="batch-result-jd-preview">${escapeHtml(item.job_description_preview)}&hellip;</span>
-                <span class="history-chevron">&#8964;</span>
-            </button>
-            <div class="batch-result-body" hidden>
-                <div class="result-card result-matched">
-                    <div class="result-icon">&#10003;</div>
-                    <div class="result-body">
-                        <h3>Matched Keywords</h3>
-                        <div class="keyword-chips">${keywordChipsHtml(item.matched_keywords, "chip-matched")}</div>
-                    </div>
-                </div>
-                <div class="result-card result-missing">
-                    <div class="result-icon">!</div>
-                    <div class="result-body">
-                        <h3>Missing Keywords</h3>
-                        <div class="keyword-chips">${keywordChipsHtml(item.missing_keywords, "chip-missing")}</div>
-                    </div>
-                </div>
-                <div class="result-card result-strengths">
-                    <div class="result-icon">&#10003;</div>
-                    <div class="result-body">
-                        <h3>Strengths</h3>
-                        ${listOrTextHtml(item.strengths)}
-                    </div>
-                </div>
-                <div class="result-card result-gaps">
-                    <div class="result-icon">!</div>
-                    <div class="result-body">
-                        <h3>Gaps</h3>
-                        ${listOrTextHtml(item.gaps)}
-                    </div>
-                </div>
-                <div class="result-card result-suggestions">
-                    <div class="result-icon">&#8594;</div>
-                    <div class="result-body">
-                        <h3>Suggestions</h3>
-                        ${listOrTextHtml(item.suggestions)}
-                    </div>
-                </div>
-            </div>
-        </div>
-    `;
 }
 
 // --- Post-analysis actions: tailored resume, cover letter, ATS check ---
@@ -1241,6 +1066,31 @@ function renderResult(data) {
     renderListOrText("resultSuggestions", data.suggestions);
     renderScore(data.score, data.matched_keywords, data.missing_keywords);
     resultSection.hidden = false;
+    renderScoreBreakdown(data.category_breakdown);
+}
+
+function renderScoreBreakdown(breakdown) {
+    if (!breakdown || breakdown.length === 0) {
+        scoreBreakdown.hidden = true;
+        return;
+    }
+
+    scoreBreakdownList.innerHTML = breakdown.map(item => {
+        const barColor = item.score >= 70 ? "var(--success)" : item.score >= 40 ? "var(--warning)" : "var(--danger)";
+        return `
+            <div class="score-breakdown-item">
+                <div class="score-breakdown-item-header">
+                    <span>${escapeHtml(item.category)}</span>
+                    <span class="score-breakdown-pct">${item.matched}/${item.total}</span>
+                </div>
+                <div class="score-breakdown-bar">
+                    <div class="score-breakdown-bar-fill" style="width: ${item.score}%; background: ${barColor};"></div>
+                </div>
+            </div>
+        `;
+    }).join("");
+
+    scoreBreakdown.hidden = false;
 }
 
 function renderScore(score, matchedKeywords, missingKeywords) {
@@ -1307,11 +1157,6 @@ function escapeHtml(text) {
 
 const historyList = document.getElementById("historyList");
 const historyEmpty = document.getElementById("historyEmpty");
-const trendsCard = document.getElementById("trendsCard");
-const trendAverageScore = document.getElementById("trendAverageScore");
-const trendSparkline = document.getElementById("trendSparkline");
-const trendMissingWrap = document.getElementById("trendMissingWrap");
-const trendMissingList = document.getElementById("trendMissingList");
 
 async function loadHistory() {
     if (!isLoggedIn) return;
@@ -1327,6 +1172,24 @@ async function loadHistory() {
     } catch (error) {
         console.error(error);
     }
+}
+
+// --- Insights ---
+// Same underlying data as History, but aggregated across every past
+// analysis instead of shown one at a time — score trend over time plus
+// the keywords that keep showing up as missing, which is a much stronger
+// "you should actually fix this" signal than any single analysis gives.
+
+const trendsCard = document.getElementById("trendsCard");
+const insightsEmpty = document.getElementById("insightsEmpty");
+const trendAverageScore = document.getElementById("trendAverageScore");
+const scoreTrendChartCanvas = document.getElementById("scoreTrendChart");
+const trendMissingWrap = document.getElementById("trendMissingWrap");
+const trendMissingList = document.getElementById("trendMissingList");
+let scoreTrendChartInstance = null;
+
+async function loadInsights() {
+    if (!isLoggedIn) return;
 
     try {
         const trendsResponse = await fetch("/api/history/trends");
@@ -1341,12 +1204,14 @@ async function loadHistory() {
 function renderTrends(trends) {
     if (!trends || trends.average_score === null || trends.average_score === undefined) {
         trendsCard.hidden = true;
+        insightsEmpty.hidden = false;
         return;
     }
 
     trendsCard.hidden = false;
+    insightsEmpty.hidden = true;
     trendAverageScore.textContent = `${trends.average_score}%`;
-    renderSparkline(trends.score_trend || []);
+    renderScoreTrendChart(trends.score_trend || []);
 
     const topMissing = trends.top_missing_keywords || [];
     if (topMissing.length === 0) {
@@ -1368,50 +1233,57 @@ function renderTrends(trends) {
     }
 }
 
-function renderSparkline(points) {
-    const svgNs = "http://www.w3.org/2000/svg";
-    trendSparkline.innerHTML = "";
+function cssVar(name) {
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
 
+function renderScoreTrendChart(points) {
+    if (scoreTrendChartInstance) {
+        scoreTrendChartInstance.destroy();
+        scoreTrendChartInstance = null;
+    }
     if (points.length === 0) return;
 
-    const width = 320;
-    const height = 64;
-    const padding = 6;
+    const labels = points.map(point =>
+        new Date(point.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })
+    );
     const scores = points.map(point => point.score);
-    const minScore = Math.min(...scores, 0);
-    const maxScore = Math.max(...scores, 100);
-    const range = maxScore - minScore || 1;
 
-    const xFor = index => points.length === 1
-        ? width / 2
-        : padding + (index / (points.length - 1)) * (width - padding * 2);
-    const yFor = score => height - padding - ((score - minScore) / range) * (height - padding * 2);
-
-    const coords = points.map((point, index) => [xFor(index), yFor(point.score)]);
-
-    const path = document.createElementNS(svgNs, "polyline");
-    path.setAttribute("points", coords.map(([x, y]) => `${x},${y}`).join(" "));
-    path.setAttribute("fill", "none");
-    path.setAttribute("stroke", "var(--accent)");
-    path.setAttribute("stroke-width", "2");
-    path.setAttribute("stroke-linecap", "round");
-    path.setAttribute("stroke-linejoin", "round");
-    trendSparkline.appendChild(path);
-
-    points.forEach((point, index) => {
-        const [x, y] = coords[index];
-        const circle = document.createElementNS(svgNs, "circle");
-        circle.setAttribute("cx", x);
-        circle.setAttribute("cy", y);
-        circle.setAttribute("r", "3");
-        circle.setAttribute("fill", "var(--accent)");
-
-        const title = document.createElementNS(svgNs, "title");
-        const date = new Date(point.date).toLocaleDateString(undefined, { dateStyle: "medium" });
-        title.textContent = `${date}: ${point.score}%`;
-        circle.appendChild(title);
-
-        trendSparkline.appendChild(circle);
+    scoreTrendChartInstance = new Chart(scoreTrendChartCanvas, {
+        type: "line",
+        data: {
+            labels,
+            datasets: [{
+                label: "Match score",
+                data: scores,
+                borderColor: cssVar("--accent"),
+                backgroundColor: cssVar("--accent-soft"),
+                fill: true,
+                tension: 0.3,
+                pointRadius: 3,
+                pointBackgroundColor: cssVar("--accent"),
+            }],
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    min: 0,
+                    max: 100,
+                    ticks: { callback: value => `${value}%`, color: cssVar("--text-secondary") },
+                    grid: { color: cssVar("--border") },
+                },
+                x: {
+                    ticks: { color: cssVar("--text-secondary") },
+                    grid: { display: false },
+                },
+            },
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: context => `${context.parsed.y}%` } },
+            },
+        },
     });
 }
 

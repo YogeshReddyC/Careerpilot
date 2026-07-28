@@ -7,6 +7,7 @@ import re
 import secrets
 import time
 from collections import Counter
+from typing import Literal
 from urllib.parse import urlparse
 
 import bcrypt
@@ -276,10 +277,14 @@ def build_pdf_from_text(text: str) -> bytes:
     return bytes(pdf.output())
 
 
+KEYWORD_CATEGORIES = ("Hard Skills", "Tools", "Responsibilities", "Qualifications")
+
+
 class KeywordMatch(BaseModel):
     keyword: str
     present_in_resume: bool
     tip: str
+    category: Literal["Hard Skills", "Tools", "Responsibilities", "Qualifications"]
 
 
 class AnalysisResult(BaseModel):
@@ -316,6 +321,43 @@ def compute_keyword_match(keyword_matches: list[KeywordMatch]):
     total = len(matched) + len(missing)
     score = round(len(matched) / total * 100) if total else 0
     return matched, missing, score
+
+
+def compute_category_breakdown(keyword_matches: list[KeywordMatch]) -> list[dict]:
+    """Same matched/total percentage as compute_keyword_match, just grouped
+    by Gemini's category tag for each keyword instead of collapsed into one
+    overall number — this is what powers the score-breakdown sidebar so a
+    user can see *why* their score is what it is (e.g. strong on Hard
+    Skills, weak on Qualifications) instead of just one flat percentage.
+    Categories the JD didn't touch at all (total == 0) are omitted rather
+    than shown as a misleading 0%."""
+    matched_counts = {category: 0 for category in KEYWORD_CATEGORIES}
+    total_counts = {category: 0 for category in KEYWORD_CATEGORIES}
+    seen = set()
+
+    for km in keyword_matches:
+        clean = km.keyword.strip()
+        key = clean.lower()
+        if not clean or key in seen:
+            continue
+        seen.add(key)
+        total_counts[km.category] += 1
+        if km.present_in_resume:
+            matched_counts[km.category] += 1
+
+    breakdown = []
+    for category in KEYWORD_CATEGORIES:
+        total = total_counts[category]
+        if total == 0:
+            continue
+        matched = matched_counts[category]
+        breakdown.append({
+            "category": category,
+            "matched": matched,
+            "total": total,
+            "score": round(matched / total * 100),
+        })
+    return breakdown
 
 
 def _normalize_for_comparison(text: str) -> str:
@@ -734,6 +776,13 @@ Also extract:
     - tip: if present_in_resume is false, one short, concrete tip (one sentence) on where and how to add or
       emphasize it in the resume — e.g. "Add to your Skills section" or "Mention in your most recent role's
       bullet points, e.g. 'Deployed services on AWS EC2'". If present_in_resume is true, leave this empty.
+    - category: exactly one of "Hard Skills", "Tools", "Responsibilities", "Qualifications":
+        - Hard Skills: technical abilities or methodologies (e.g. "Data Analysis", "Agile", "Unit Testing")
+        - Tools: specific named software, platforms, or products (e.g. "AWS", "Salesforce", "Excel", "Docker")
+        - Responsibilities: duties or activities the role involves (e.g. "maintaining CRM records",
+          "leading a team of 5", "tracking SLAs")
+        - Qualifications: education, certifications, or years of experience (e.g. "Bachelor's degree",
+          "PMP certification", "5+ years of experience")
 
 Keep each keyword short (1-4 words), avoid duplicates or near-duplicates, and only include real
 requirements/skills/responsibilities the job description actually asks for — not generic words.
@@ -777,9 +826,8 @@ def validate_resume_and_jd(resume: str, job_description: str) -> None:
 
 
 def run_analysis(resume: str, job_description: str) -> dict:
-    """Core resume-vs-JD analysis, shared by the single /analyze endpoint
-    and the multi-JD /analyze-batch endpoint — one Gemini call in, one
-    scored result dict out."""
+    """Core resume-vs-JD analysis for the /analyze endpoint — one Gemini
+    call in, one scored result dict out."""
     prompt = ANALYSIS_PROMPT.format(resume=resume, job_description=job_description)
 
     start_time = time.monotonic()
@@ -829,6 +877,7 @@ def run_analysis(resume: str, job_description: str) -> dict:
         "matched_keywords": matched_keywords,
         "missing_keywords": missing_keywords,
         "score": score,
+        "category_breakdown": compute_category_breakdown(grounded_matches),
     }
 
 
@@ -1162,59 +1211,6 @@ async def check_ats(
         raise HTTPException(status_code=500, detail="Something went wrong, try again")
 
     return {"issues": response.parsed.issues, "passed": response.parsed.passed}
-
-
-MAX_BATCH_JOB_DESCRIPTIONS = 10
-
-
-@app.post("/analyze-batch")
-async def analyze_batch(
-    request: Request,
-    resume_file: UploadFile = File(...),
-    job_descriptions: str = Form(...),  # JSON-encoded list[str]
-    _: None = Depends(require_login),
-):
-    file_bytes = await resume_file.read()
-    if len(file_bytes) > MAX_RESUME_FILE_SIZE:
-        raise HTTPException(status_code=400, detail="Resume file is too large (max 5MB)")
-
-    resume = extract_resume_text(resume_file.filename, file_bytes).strip()
-    if not resume:
-        raise HTTPException(status_code=400, detail="Resume is required")
-    if len(resume) > 15000:
-        raise HTTPException(status_code=400, detail="Resume too long (max 15,000 characters)")
-
-    try:
-        jd_list = json.loads(job_descriptions)
-    except (TypeError, ValueError):
-        raise HTTPException(status_code=400, detail="Invalid job descriptions payload")
-    if not isinstance(jd_list, list) or not jd_list:
-        raise HTTPException(status_code=400, detail="At least one job description is required")
-    if len(jd_list) > MAX_BATCH_JOB_DESCRIPTIONS:
-        raise HTTPException(
-            status_code=400, detail=f"Max {MAX_BATCH_JOB_DESCRIPTIONS} job descriptions per batch"
-        )
-
-    user_id = request.session.get("user_id")
-    results = []
-    for raw_jd in jd_list:
-        jd = (raw_jd or "").strip()
-        if not jd:
-            continue
-        if len(jd) > 15000:
-            raise HTTPException(
-                status_code=400, detail="Each job description must be under 15,000 characters"
-            )
-        result = run_analysis(resume, jd)
-        if user_id is not None:
-            save_analysis(user_id, resume_file.filename, jd, result)
-        results.append({"job_description_preview": jd[:120], **result})
-
-    if not results:
-        raise HTTPException(status_code=400, detail="At least one job description is required")
-
-    results.sort(key=lambda r: r["score"], reverse=True)
-    return {"results": results}
 
 
 @app.get("/api/history")

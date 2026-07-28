@@ -25,6 +25,7 @@
             <div class="nav-links">
                 <button class="nav-item active" data-section="home">Home</button>
                 <button class="nav-item" id="historyNavBtn" data-section="history" hidden>History</button>
+                <button class="nav-item" id="insightsNavBtn" data-section="insights" hidden>Insights</button>
                 <button class="nav-item" data-section="about">About</button>
                 <button class="nav-item" data-section="contact">Contact</button>
             </div>
@@ -101,7 +102,6 @@
                         <div class="input-col">
                             <div class="jd-col-header">
                                 <label for="jd">Job Description</label>
-                                <button type="button" class="mode-toggle-link" id="batchModeToggle">Analyze against multiple jobs</button>
                             </div>
                             <div class="jd-url-import">
                                 <input
@@ -119,18 +119,6 @@
                                 rows="12"
                                 placeholder="Paste the job description here..."></textarea>
                             <span class="char-count" id="jdCount">0 / 15,000</span>
-
-                            <div class="batch-jd-section" id="batchJdSection" hidden>
-                                <button type="button" class="mode-toggle-link" id="singleModeToggle">Analyze a single job instead</button>
-                                <div class="batch-jd-list" id="batchJdList">
-                                    <div class="batch-jd-item">
-                                        <textarea class="batch-jd-textarea" rows="6" placeholder="Paste job description #1..."></textarea>
-                                        <button type="button" class="btn-remove-jd" aria-label="Remove this job description" hidden>&times;</button>
-                                    </div>
-                                </div>
-                                <button type="button" class="btn-ghost" id="addJdBtn">+ Add another job</button>
-                                <p class="batch-jd-hint">Up to 10 job descriptions, same resume analyzed against each.</p>
-                            </div>
                         </div>
                     </div>
 
@@ -139,12 +127,14 @@
                         <span class="spinner" id="spinner" hidden></span>
                     </button>
 
-                    <div class="batch-results" id="batchResults" hidden>
-                        <h3>Ranked Results</h3>
-                        <div class="batch-results-list" id="batchResultsList"></div>
-                    </div>
-
                     <p class="error-message" id="errorMessage" hidden></p>
+
+                    <div class="result-layout">
+
+                    <aside class="score-breakdown" id="scoreBreakdown" hidden>
+                        <h3>Score Breakdown</h3>
+                        <div class="score-breakdown-list" id="scoreBreakdownList"></div>
+                    </aside>
 
                     <section class="result" id="result" hidden>
 
@@ -210,6 +200,8 @@
                         </div>
 
                     </section>
+
+                    </div>
 
                     <div class="post-analysis-actions" id="postAnalysisActions" hidden>
                         <button id="tailorResumeBtn" class="btn-action">
@@ -349,16 +341,28 @@
 
             <!-- HISTORY SECTION (logged-in users only — the server also enforces this) -->
             <section id="section-history" class="content-section">
+                <div class="card">
+                    <p class="history-empty" id="historyEmpty" hidden>
+                        You haven't analyzed any resumes yet — head to Home to run your first analysis.
+                    </p>
+                    <div class="history-list" id="historyList"></div>
+                </div>
+            </section>
+
+            <!-- INSIGHTS SECTION (logged-in users only — the server also enforces this,
+                 same data source as History but aggregated across every past analysis) -->
+            <section id="section-insights" class="content-section">
                 <div class="card trends-card" id="trendsCard" hidden>
-                    <h3>Your Trends</h3>
                     <div class="trends-top">
                         <div class="trend-stat">
                             <span class="trend-stat-value" id="trendAverageScore">—</span>
                             <span class="trend-stat-label">Average match score</span>
                         </div>
-                        <div class="trend-sparkline-wrap">
+                        <div class="trend-chart-wrap">
                             <span class="trend-stat-label">Score over time</span>
-                            <svg id="trendSparkline" class="trend-sparkline" viewBox="0 0 320 64" preserveAspectRatio="none" role="img" aria-label="Match score over time"></svg>
+                            <div class="trend-chart-canvas-box">
+                                <canvas id="scoreTrendChart"></canvas>
+                            </div>
                         </div>
                     </div>
                     <div class="trend-missing-wrap" id="trendMissingWrap" hidden>
@@ -366,13 +370,9 @@
                         <div class="trend-missing-list" id="trendMissingList"></div>
                     </div>
                 </div>
-
-                <div class="card">
-                    <p class="history-empty" id="historyEmpty" hidden>
-                        You haven't analyzed any resumes yet — head to Home to run your first analysis.
-                    </p>
-                    <div class="history-list" id="historyList"></div>
-                </div>
+                <p class="history-empty" id="insightsEmpty" hidden>
+                    Run a few analyses and your trends will show up here — average score, score over time, and your most frequently missing skills across every job you've checked.
+                </p>
             </section>
 
             <!-- ABOUT SECTION (public, no login needed) -->
@@ -517,6 +517,7 @@
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
     <script src="script.js"></script>
 
 </body>
