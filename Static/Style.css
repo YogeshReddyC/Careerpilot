@@ -4,6 +4,7 @@
 
   --bg: #f5f5fb;
   --card-bg: #ffffff;
+  --soft-bg: #fbfbfe;
   --text-primary: #1a1b2e;
   --text-secondary: #6b7085;
   --border: #e6e6f2;
@@ -25,6 +26,28 @@
   --radius: 16px;
   --shadow: 0 4px 24px rgba(20, 21, 43, 0.06);
   --shadow-lg: 0 12px 40px rgba(20, 21, 43, 0.12);
+}
+
+[data-theme="dark"] {
+  --navbar-bg: #1a1b2e;
+  --navbar-border: #2e2f47;
+
+  --bg: #121320;
+  --card-bg: #1a1b2e;
+  --soft-bg: #202134;
+  --text-primary: #eceefb;
+  --text-secondary: #9497b3;
+  --border: #2e2f47;
+
+  --accent-soft: #2a2450;
+
+  --success-soft: #123829;
+  --warning-soft: #3a2a14;
+  --info-soft: #16283f;
+  --danger-soft: #3a1c1c;
+
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 12px 40px rgba(0, 0, 0, 0.45);
 }
 
 * {
@@ -448,7 +471,7 @@ body {
   font-size: 14px;
   border: 1.5px solid var(--border);
   border-radius: 10px;
-  background: #fbfbfe;
+  background: var(--soft-bg);
   color: var(--text-primary);
   margin-bottom: 16px;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -458,7 +481,13 @@ body {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 4px var(--accent-soft);
-  background: white;
+  background: var(--soft-bg);
+}
+
+.login-form input:-webkit-autofill,
+.login-form input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--text-primary);
+  transition: background-color 9999s ease-in-out 0s;
 }
 
 .login-form button {
@@ -577,7 +606,7 @@ textarea {
   line-height: 1.5;
   border: 1.5px solid var(--border);
   border-radius: 12px;
-  background: #fbfbfe;
+  background: var(--soft-bg);
   color: var(--text-primary);
   resize: vertical;
   transition: border-color 0.15s, box-shadow 0.15s;
@@ -591,7 +620,7 @@ textarea:focus {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 4px var(--accent-soft);
-  background: white;
+  background: var(--soft-bg);
 }
 
 .char-count {
@@ -628,7 +657,7 @@ textarea:focus {
   padding: 12px 14px;
   border: 1.5px dashed var(--border);
   border-radius: 10px;
-  background: #fbfbfe;
+  background: var(--soft-bg);
   color: var(--text-secondary);
   font-size: 13px;
   font-weight: 500;
@@ -654,7 +683,7 @@ textarea:focus {
 .file-drop input[type="file"]:focus + .file-drop-label {
   border-color: var(--accent);
   box-shadow: 0 0 0 4px var(--accent-soft);
-  background: white;
+  background: var(--soft-bg);
 }
 
 .file-drop.has-file .file-drop-label {
@@ -713,8 +742,8 @@ button#analyzeBtn:disabled {
 
 .error-message {
   text-align: center;
-  color: #e05252;
-  background: #fdeaea;
+  color: var(--danger);
+  background: var(--danger-soft);
   border-radius: 10px;
   padding: 12px 16px;
   margin: 20px 0 0;
@@ -948,7 +977,7 @@ button#analyzeBtn:disabled {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: white;
+  background: var(--card-bg);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1130,7 +1159,7 @@ button#analyzeBtn:disabled {
   font-size: 13px;
   border: 1.5px solid var(--border);
   border-radius: 10px;
-  background: #fbfbfe;
+  background: var(--soft-bg);
   color: var(--text-primary);
   transition: border-color 0.15s, box-shadow 0.15s;
 }
@@ -1139,7 +1168,7 @@ button#analyzeBtn:disabled {
   outline: none;
   border-color: var(--accent);
   box-shadow: 0 0 0 4px var(--accent-soft);
-  background: white;
+  background: var(--soft-bg);
 }
 
 .jd-url-import .btn-copy {
@@ -1190,7 +1219,7 @@ button#analyzeBtn:disabled {
   padding: 20px;
   border: 1px solid var(--border);
   border-radius: 12px;
-  background: #fbfbfe;
+  background: var(--soft-bg);
 }
 
 .output-panel-header {
@@ -1211,7 +1240,7 @@ button#analyzeBtn:disabled {
   height: 28px;
   padding: 0;
   border: 1.5px solid var(--border);
-  background: white;
+  background: var(--card-bg);
   color: var(--text-secondary);
   font-size: 12px;
   line-height: 1;
@@ -1238,7 +1267,7 @@ button#analyzeBtn:disabled {
   height: 28px;
   padding: 0;
   border: 1.5px solid var(--border);
-  background: white;
+  background: var(--card-bg);
   color: var(--text-secondary);
   font-size: 16px;
   line-height: 1;
@@ -1267,7 +1296,7 @@ button#analyzeBtn:disabled {
 .btn-copy {
   padding: 6px 12px;
   border: 1.5px solid var(--border);
-  background: white;
+  background: var(--card-bg);
   color: var(--text-primary);
   font-family: "Inter", sans-serif;
   font-size: 12px;
@@ -1356,7 +1385,7 @@ button#analyzeBtn:disabled {
   border: 1.5px solid var(--border);
   border-radius: 10px;
   overflow: hidden;
-  background: white;
+  background: var(--card-bg);
   font-family: "Inter", sans-serif;
   transition: border-color 0.15s, transform 0.15s;
 }
@@ -1371,7 +1400,7 @@ button#analyzeBtn:disabled {
   width: 100%;
   height: 300px;
   overflow: hidden;
-  background: #f4f4fa;
+  background: var(--soft-bg);
   border-bottom: 1px solid var(--border);
 }
 

@@ -1,5 +1,35 @@
 const MAX_CHARS = 15000;
 
+// --- Theme toggle (light/dark), persisted in localStorage ---
+(function initTheme() {
+    const THEME_KEY = "careerpilot-theme";
+    const root = document.documentElement;
+    const toggleBtn = document.getElementById("themeToggleBtn");
+
+    function applyTheme(theme) {
+        if (theme === "dark") {
+            root.setAttribute("data-theme", "dark");
+            if (toggleBtn) toggleBtn.innerHTML = "&#9728;"; // sun: switch back to light
+        } else {
+            root.removeAttribute("data-theme");
+            if (toggleBtn) toggleBtn.innerHTML = "&#9789;"; // moon: switch to dark
+        }
+    }
+
+    const saved = localStorage.getItem(THEME_KEY);
+    const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    applyTheme(saved || (prefersDark ? "dark" : "light"));
+
+    if (toggleBtn) {
+        toggleBtn.addEventListener("click", () => {
+            const isDark = root.getAttribute("data-theme") === "dark";
+            const next = isDark ? "light" : "dark";
+            applyTheme(next);
+            localStorage.setItem(THEME_KEY, next);
+        });
+    }
+})();
+
 // Render's free tier sleeps after ~15min idle; the first request after that
 // can take 30+ seconds to wake up, and a Cloudflare gateway timeout during
 // that window returns an HTML error page instead of JSON. This retries once
